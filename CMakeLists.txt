@@ -15,7 +15,7 @@ if(NOT WITH_REWRITE)
    set(CONFIGURE_ARGS ${CONFIGURE_ARGS} "--without-http_rewrite_module")
 endif()
 
-# extra modules
+# extra modules source dirs
 set(MODULE_DIRS
    agentzh-echo-nginx-module-df58882 
 )
@@ -28,7 +28,9 @@ if (MODULE_DIRS)
     message(STATUS "added modules:")
     foreach(module ${MODULE_DIRS})
         set(module_dir ${nginx_SOURCE_DIR}/${module})
+        set(module_conf ${module_dir}/config)
         set(CONFIGURE_ARGS ${CONFIGURE_ARGS} "--add-module=${module_dir}")
+        set(CONFIGURE_DEPS ${CONFIGURE_DEPS} ${module_conf})
         message("\t${module}")
     endforeach()
 endif()
@@ -42,6 +44,7 @@ endforeach()
 # configure script
 add_custom_command(
     OUTPUT ${BUILD_DIR}/Makefile
+    DEPENDS ${CONFIGURE_DEPS} 
     COMMAND ./configure ARGS ${CONFIGURE_ARGS}
     WORKING_DIRECTORY ${nginx_SOURCE_DIR}/${NGINX_SRC}
     COMMENT "configuring nginx"
