@@ -20,6 +20,10 @@ set(MODULE_DIRS
    agentzh-echo-nginx-module-df58882 
 )
 
+# add C++ support
+set(CONFIGURE_ARGS ${CONFIGURE_ARGS} "--with-ld-opt=-lstdc++")
+set(CONFIGURE_ARGS ${CONFIGURE_ARGS} "--with-cpp_test_module")
+
 if (MODULE_DIRS)
     message(STATUS "added modules:")
     foreach(module ${MODULE_DIRS})
