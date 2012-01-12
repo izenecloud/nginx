@@ -53,3 +53,10 @@ add_custom_target(nginx
     VERBATIM) 
 set_directory_properties(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES ${BUILD_DIR})
 
+# install target
+add_custom_target(install
+    make install
+    WORKING_DIRECTORY ${nginx_SOURCE_DIR}/${NGINX_SRC}
+    COMMENT "installing nginx")
+add_dependencies(install nginx)
+
