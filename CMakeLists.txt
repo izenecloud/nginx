@@ -10,7 +10,7 @@ set(BUILD_DIR ${nginx_BINARY_DIR}/${NGINX_SRC})
 set(CONFIGURE_ARGS "--builddir=${BUILD_DIR}")
 
 # nginx configuration options
-option(WITH_REWRITE false)
+option(WITH_REWRITE "enable the http_rewrite module" false)
 if(NOT WITH_REWRITE)
    set(CONFIGURE_ARGS ${CONFIGURE_ARGS} "--without-http_rewrite_module")
 endif()
@@ -20,30 +20,36 @@ set(MODULE_DIRS
    agentzh-echo-nginx-module-df58882 
 )
 
-foreach(module ${nginx_MODULE_DIRS})
-    set(module_dir ${nginx_SOURCE_DIR}/${module})
-    set(CONFIGURE_ARGS ${CONFIGURE_ARGS} "--add-module=${module_dir}")
-endforeach()
+if (MODULE_DIRS)
+    message(STATUS "added modules:")
+    foreach(module ${MODULE_DIRS})
+        set(module_dir ${nginx_SOURCE_DIR}/${module})
+        set(CONFIGURE_ARGS ${CONFIGURE_ARGS} "--add-module=${module_dir}")
+        message("\t${module}")
+    endforeach()
+endif()
 
+# summary
 message(STATUS "configure arguments: ")
 foreach(arg ${CONFIGURE_ARGS})
     message("\t${arg}")
-    set(CONFIGURE_ARGUMENTS ${CONFIGURE_ARGUMENTS} "${arg}")
 endforeach()
 
-# configure target
-add_custom_target(configure
-    ./configure ${CONFIGURE_ARGUMENTS}
+# configure script
+add_custom_command(
+    OUTPUT ${BUILD_DIR}/Makefile
+    COMMAND ./configure ARGS ${CONFIGURE_ARGS}
     WORKING_DIRECTORY ${nginx_SOURCE_DIR}/${NGINX_SRC}
-    COMMENT "./configure ${CONFIGURE_ARGS}"
+    COMMENT "configuring nginx"
     VERBATIM) 
 
 # make target
 set(CMAKE_VERBOSE_MAKEFILE true)
 add_custom_target(nginx
     ALL make
+    DEPENDS ${BUILD_DIR}/Makefile
     WORKING_DIRECTORY ${nginx_SOURCE_DIR}/${NGINX_SRC}
-    COMMENT "make"
+    COMMENT "building nginx"
     VERBATIM) 
 set_directory_properties(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES ${BUILD_DIR})
 
