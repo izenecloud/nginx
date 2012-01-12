@@ -1,6 +1,7 @@
 project(nginx)
 
 cmake_minimum_required(VERSION 2.8)
+set(CMAKE_VERBOSE_MAKEFILE true)
 
 # nginx source dir
 set(NGINX_SRC nginx-1.0.11)
@@ -52,13 +53,12 @@ add_custom_command(
     VERBATIM) 
 
 # make target
-set(CMAKE_VERBOSE_MAKEFILE true)
 add_custom_target(nginx
     ALL make
     DEPENDS ${BUILD_DIR}/Makefile
     WORKING_DIRECTORY ${nginx_SOURCE_DIR}/${NGINX_SRC}
     COMMENT "building nginx"
-    VERBATIM) 
+    VERBATIM)
 set_directory_properties(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES ${BUILD_DIR})
 
 # install target
