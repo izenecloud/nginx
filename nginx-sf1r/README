@@ -1,0 +1,22 @@
+from: http://forum.nginx.org/read.php?2,149667
+---
+
+As it was already pointed out - you don't want to compile nginx
+with g++, as it's written in C, not C++, while gcc invoked as g++
+will assume .c files are in C++.
+
+What you want is to compile *your module* with C++ compiler. This
+is easy (even keeping in mind that nginx's build doesn't
+distinguish between source files and always calls ${CC}): gcc will
+recognize your module is in C++ as long as it's named
+appropriately named[1] (e.g. *.cpp as in case of test module).
+
+[1] http://gcc.gnu.org/onlinedocs/gcc-4.5.1/gcc/Invoking-G_002b_002b.html#Invoking-G_002b_002b
+
+The only thing you have to do is to include C++ standard library
+during linking. This may be done e.g. with --with-ld-opt
+configure argument.
+
+E.g. the following will compile nginx with test cpp module:
+
+./configure --with-ld-opt="-lstdc++" --with-cpp_test_module && make

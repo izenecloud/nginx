@@ -18,6 +18,7 @@ endif()
 # extra modules source dirs
 set(MODULE_DIRS
    agentzh-echo-nginx-module-df58882 
+   nginx-sf1r
 )
 
 # add C++ support
