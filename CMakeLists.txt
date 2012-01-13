@@ -4,7 +4,7 @@ cmake_minimum_required(VERSION 2.8)
 set(CMAKE_VERBOSE_MAKEFILE true)
 
 # nginx source dir
-set(NGINX_SRC nginx-1.0.11)
+set(NGINX_SRC tengine)
 
 # out of source build
 set(BUILD_DIR ${nginx_BINARY_DIR}/${NGINX_SRC})
