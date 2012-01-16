@@ -24,6 +24,10 @@ set(TEST_NGINX_PATH ${nginx_SOURCE_DIR}/test-nginx)
 set(BUILD_DIR ${nginx_BINARY_DIR}/${NGINX_SRC})
 set(CONFIGURE_ARGS "--builddir=${BUILD_DIR}")
 
+if (CMAKE_BUILD_TYPE STREQUAL Debug)
+    set(CONFIGURE_ARGS ${CONFIGURE_ARGS} "--with-debug")
+endif()
+
 # nginx configuration options
 option(WITH_REWRITE "enable the http_rewrite module" false)
 if(NOT WITH_REWRITE)

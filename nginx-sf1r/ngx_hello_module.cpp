@@ -1,6 +1,6 @@
 /* 
  * File:   ngx_hello_module.cpp
- * Author: paolo
+ * Author: Paolo D'Apice
  * 
  * Created on January 12, 2012, 3:27 PM
  */
@@ -15,12 +15,15 @@ extern "C" {
 
 
 #define CAST(T,V)       static_cast< T >( V )
-#define HELLO           "Ciao! 你好！"
+
+#define DEFAULT_STRING  "hello"
+#define DEFAULT_COUNT   1
+#define TEXT_PLAIN      "text/plain"
 
 
 /// Location configuration structure.
 typedef struct {
-    ngx_uint_t hello_uint; ///< test int 
+    ngx_uint_t hello_count; ///< test int 
     ngx_str_t  hello_str;  ///< test string
 } ngx_hello_loc_conf_t;
 
@@ -42,16 +45,16 @@ static ngx_command_t ngx_hello_commands[] = {
         NULL                                 // post
     },
     {
-        ngx_string("hello_uint"),
-        NGX_HTTP_MAIN_CONF | NGX_HTTP_SRV_CONF | NGX_HTTP_LOC_CONF | NGX_CONF_TAKE1,
+        ngx_string("hello_count"),
+        NGX_HTTP_LOC_CONF | NGX_CONF_TAKE1,
         ngx_conf_set_num_slot,
         NGX_HTTP_LOC_CONF_OFFSET,
-        offsetof(ngx_hello_loc_conf_t, hello_uint),
+        offsetof(ngx_hello_loc_conf_t, hello_count),
         NULL,
     },
     {
         ngx_string("hello_str"),
-        NGX_HTTP_MAIN_CONF | NGX_HTTP_SRV_CONF | NGX_HTTP_LOC_CONF | NGX_CONF_TAKE1,
+        NGX_HTTP_LOC_CONF | NGX_CONF_TAKE1,
         ngx_conf_set_str_slot,
         NGX_HTTP_LOC_CONF_OFFSET,
         offsetof(ngx_hello_loc_conf_t, hello_str),
@@ -63,17 +66,17 @@ static ngx_command_t ngx_hello_commands[] = {
 
 /// Module context.
 static ngx_http_module_t ngx_hello_module_ctx = {
-    NULL, // preconfiguration
-    NULL, // postconfiguration
+    NULL,                                       // preconfiguration
+    NULL,                                       // postconfiguration
+    
+    NULL,                                       // create main configuration
+    NULL,                                       // init main configuration
 
-    NULL, // create main configuration
-    NULL, // init main configuration
+    NULL,                                       // create server configuration
+    NULL,                                       // init main configuration
 
-    NULL, // create server configuration
-    NULL, // init main configuration
-
-    ngx_hello_create_loc_conf, // create location configuration
-    ngx_hello_merge_loc_conf   // init location configuration
+    ngx_hello_create_loc_conf,                  // create location configuration
+    ngx_hello_merge_loc_conf                    // init location configuration
 };
 
 
@@ -84,11 +87,10 @@ ngx_hello_create_loc_conf(ngx_conf_t* cf) {
     if (conf == NULL) {
         return NGX_CONF_ERROR;
     }
+    
     // init struct values
-    conf->hello_uint = NGX_CONF_UNSET_UINT;
-    conf->hello_str.len = 0;
-    conf->hello_str.data = CAST(u_char*, NGX_CONF_UNSET_PTR);
-
+    conf->hello_count = NGX_CONF_UNSET_UINT;
+    
     return conf;
 }
 
@@ -99,9 +101,15 @@ ngx_hello_merge_loc_conf(ngx_conf_t* cf, void* parent, void* child) {
     ngx_hello_loc_conf_t* conf = CAST(ngx_hello_loc_conf_t*, child);
 
     // merge values (with defaults)
-    ngx_conf_merge_uint_value(conf->hello_uint, prev->hello_uint, 0);
-    ngx_conf_merge_str_value(conf->hello_str, prev->hello_str, "");
+    ngx_conf_merge_uint_value(conf->hello_count, prev->hello_count, DEFAULT_COUNT);
+    ngx_conf_merge_str_value(conf->hello_str, prev->hello_str, DEFAULT_STRING);
 
+    // check values
+    if (conf->hello_count < 1) {
+        ngx_conf_log_error(NGX_LOG_EMERG, cf, 0, "hello_count radius must be equal or more than 1");
+        return CAST(char*, NGX_CONF_ERROR);
+    }
+    
     return NGX_CONF_OK;
 }
 
@@ -109,8 +117,8 @@ ngx_hello_merge_loc_conf(ngx_conf_t* cf, void* parent, void* child) {
 /// Module definition
 ngx_module_t ngx_hello_module = {
     NGX_MODULE_V1,
-    &ngx_hello_module_ctx, // module context
-    ngx_hello_commands,    // module directives
+    &ngx_hello_module_ctx,      // module context
+    ngx_hello_commands,         // module directives
     NGX_HTTP_MODULE,            // module type
     NULL,                       // init master
     NULL,                       // init module
@@ -125,7 +133,7 @@ ngx_module_t ngx_hello_module = {
 
 static ngx_int_t
 ngx_hello_handler(ngx_http_request_t* request) {
-    //ngx_hello_loc_conf_t* conf = CAST(ngx_hello_loc_conf_t*, ngx_http_get_module_loc_conf(request, ngx_hello_module));
+    ngx_hello_loc_conf_t* conf = CAST(ngx_hello_loc_conf_t*, ngx_http_get_module_loc_conf(request, ngx_hello_module));
 
     // response to 'GET' and 'POST' requests only
     if (!(request->method & (NGX_HTTP_GET|NGX_HTTP_POST))) {
@@ -133,17 +141,21 @@ ngx_hello_handler(ngx_http_request_t* request) {
     }
 
     /* do actual processing */
-    std::string helloString(HELLO);
-    helloString += 1;
+    const char* hello_str = (const char*) conf->hello_str.data;
+    std::string helloString(hello_str);
+    for (ngx_uint_t i = 1; i < conf->hello_count; ++i) {
+        helloString.append("\n").append((const char*)conf->hello_str.data);
+    }
+    ngx_log_error(NGX_LOG_DEBUG, request->connection->log, 0, "hello: %s", helloString.c_str());
     
     /* set response header */
     
     // set the status line
     request->headers_out.status = NGX_HTTP_OK;
     request->headers_out.content_length_n = helloString.length();
-    request->headers_out.content_type_len = sizeof("text/html") - 1;
-    request->headers_out.content_type.len = sizeof("text/html") - 1;
-    request->headers_out.content_type.data = (u_char*) "text/html";
+    request->headers_out.content_type_len = sizeof(TEXT_PLAIN) - 1;
+    request->headers_out.content_type.len = sizeof(TEXT_PLAIN) - 1;
+    request->headers_out.content_type.data = (u_char*) TEXT_PLAIN;
     
     /* set response body */
     
@@ -159,8 +171,8 @@ ngx_hello_handler(ngx_http_request_t* request) {
     // adjust the pointers of the buffer
     buffer->pos = temp;                              // first position of the data
     buffer->last = temp + helloString.length();      // last position of the data
-    buffer->memory = 1;                                             // this buffer is in memory (read-only)
-    buffer->last_buf = 1;                                           // this is the last buffer in the buffer chain
+    buffer->memory = 1;                              // this buffer is in memory (read-only)
+    buffer->last_buf = 1;                            // this is the last buffer in the buffer chain
 
     // attach this buffer to the buffer chain
     ngx_chain_t out;

@@ -8,9 +8,6 @@ repeat_each(1);
 plan tests => 5;
 #use Test::More qw(no_plan);
 
-$ENV{TEST_NGINX_SF1R_HOST} ||= '127.0.0.1';
-$ENV{TEST_NGINX_SF1R_PORT} ||= 18181;
-
 our $config = <<'_EOC_';
     location = /echo {
         echo hello;
