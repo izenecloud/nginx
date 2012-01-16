@@ -36,11 +36,11 @@ endif()
 
 # extra modules source dirs
 set(ECHO_MODULE agentzh-echo-nginx-module-df58882)
-set(SF1R_MODULE nginx-sf1r)
+set(HELLO_MODULE nginx-hello-module)
 
 set(MODULE_DIRS
     ${ECHO_MODULE}
-    ${SF1R_MODULE}
+    ${HELLO_MODULE}
 )
 
 # add C++ support
@@ -86,12 +86,12 @@ set_directory_properties(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES ${BUILD_DIR})
 add_custom_target(test
      COMMAND ${CMAKE_COMMAND} 
           -DPROVE=${PROVE_EXECUTABLE}
-          -DDIR=${nginx_SOURCE_DIR}/${SF1R_MODULE}
+          -DDIR=${nginx_SOURCE_DIR}/${HELLO_MODULE}
           -DLIB=${TEST_NGINX_PATH}/lib 
           -DINC=${TEST_NGINX_PATH}/inc
           -DNGINX=${BUILD_DIR}/nginx
           -P ${nginx_SOURCE_DIR}/test.cmake
-     COMMENT "test ${SF1R_MODULE}")
+     COMMENT "test ${HELLO_MODULE}")
 add_dependencies(test nginx)
 
 # install target
