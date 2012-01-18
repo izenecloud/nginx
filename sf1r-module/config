@@ -1,0 +1,11 @@
+ngx_addon_name=ngx_sf1r_module
+HTTP_MODULES="$HTTP_MODULES ngx_sf1r_module"
+CORE_LIBS="$CORE_LIBS -lstdc++"
+NGX_ADDON_DEPS="$NGX_ADDON_DEPS \
+                $ngx_addon_dir/ngx_sf1r_handler.h \
+                $ngx_addon_dir/ngx_sf1r_module.h \
+                $ngx_addon_dir/ngx_sf1r_utils.h"
+NGX_ADDON_SRCS="$NGX_ADDON_SRCS \
+                $ngx_addon_dir/ngx_sf1r_handler.cpp \
+                $ngx_addon_dir/ngx_sf1r_module.cpp"
+

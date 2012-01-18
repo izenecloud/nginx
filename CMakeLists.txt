@@ -37,14 +37,13 @@ endif()
 # extra modules source dirs
 set(ECHO_MODULE agentzh-echo-nginx-module-df58882)
 set(HELLO_MODULE nginx-hello-module)
+set(SF1R_MODULE sf1r-module)
 
 set(MODULE_DIRS
     ${ECHO_MODULE}
-    ${HELLO_MODULE}
+#    ${HELLO_MODULE}
+    ${SF1R_MODULE}
 )
-
-# add C++ support
-set(CONFIGURE_ARGS ${CONFIGURE_ARGS} "--with-ld-opt=-lstdc++")
 
 # modules summary
 if (MODULE_DIRS)
@@ -82,17 +81,28 @@ add_custom_target(nginx ALL
     VERBATIM)
 set_directory_properties(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES ${BUILD_DIR})
 
-# test target
-add_custom_target(test
-     COMMAND ${CMAKE_COMMAND} 
-          -DPROVE=${PROVE_EXECUTABLE}
-          -DDIR=${nginx_SOURCE_DIR}/${HELLO_MODULE}
-          -DLIB=${TEST_NGINX_PATH}/lib 
-          -DINC=${TEST_NGINX_PATH}/inc
-          -DNGINX=${BUILD_DIR}/nginx
-          -P ${nginx_SOURCE_DIR}/test.cmake
-     COMMENT "test ${HELLO_MODULE}")
-add_dependencies(test nginx)
+# tests # TODO: use add_tests
+set(MODULE_TEST ${SF1R_MODULE})
+
+if (MODULE_TEST)
+    add_custom_target(test)
+    message(STATUS "adding tests for modules:")
+    foreach(module ${MODULE_TEST})
+        set(module_dir ${nginx_SOURCE_DIR}/${module})
+        add_custom_target(test-${module}
+            COMMAND ${CMAKE_COMMAND} 
+                -DPROVE=${PROVE_EXECUTABLE}
+                -DDIR=${module_dir}
+                -DLIB=${TEST_NGINX_PATH}/lib 
+                -DINC=${TEST_NGINX_PATH}/inc
+                -DNGINX=${BUILD_DIR}/nginx
+                -P ${nginx_SOURCE_DIR}/test.cmake
+            COMMENT "test ${module}")
+            add_dependencies(test-${module} nginx)
+            add_dependencies(test test-${module})
+        message("\t${module}")
+    endforeach()
+endif()
 
 # install target
 add_custom_target(install
@@ -100,4 +110,3 @@ add_custom_target(install
     WORKING_DIRECTORY ${nginx_SOURCE_DIR}/${NGINX_SRC}
     COMMENT "installing nginx")
 add_dependencies(install nginx)
-
