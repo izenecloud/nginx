@@ -10,6 +10,7 @@
 
 
 #define scast(T,V)  static_cast< T >( V )
+#define ccast(T,V)  const_cast< T >( V )
 #define rcast(T,V)  reinterpret_cast< T >( V )
 
 #define TEXT_PLAIN              "text/plain"
