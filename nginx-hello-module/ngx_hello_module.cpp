@@ -40,7 +40,7 @@ static ngx_command_t ngx_hello_commands[] = {
         ngx_string("hello"),                 // directive name
         NGX_HTTP_LOC_CONF | NGX_CONF_NOARGS, // location config, no arguments
         ngx_hello,                           // callback
-        NGX_HTTP_LOC_CONF_OFFSET,            // configuration
+        0,                                   // configuration
         0,                                   // offset
         NULL                                 // post
     },
@@ -133,6 +133,7 @@ ngx_module_t ngx_hello_module = {
 
 static ngx_int_t
 ngx_hello_handler(ngx_http_request_t* request) {
+    ngx_log_error(NGX_LOG_NOTICE, request->connection->log, 0, "hello handler");
     ngx_hello_loc_conf_t* conf = CAST(ngx_hello_loc_conf_t*, ngx_http_get_module_loc_conf(request, ngx_hello_module));
 
     // response to 'GET' and 'POST' requests only
@@ -179,14 +180,13 @@ ngx_hello_handler(ngx_http_request_t* request) {
     out.buf = buffer;
     out.next = NULL;
 
-    // send the header
+    /* send the response */
     ngx_int_t rc = ngx_http_send_header(request);
 
     if (rc == NGX_ERROR || rc > NGX_OK || request->header_only) {
         return rc;
     }
     
-    // send the buffer chain
     return ngx_http_output_filter(request, &out);
 }
 
@@ -197,5 +197,6 @@ ngx_hello(ngx_conf_t* cf, ngx_command_t* cmd, void* conf) {
     ngx_http_core_loc_conf_t* clcf = CAST(ngx_http_core_loc_conf_t*, ngx_http_conf_get_module_loc_conf(cf, ngx_http_core_module)); 
     clcf->handler = ngx_hello_handler; // handler to process the 'hello' directive
 
+    ngx_log_error(NGX_LOG_NOTICE, cf->log, 0, "hello module loaded");
     return NGX_CONF_OK;
 }
