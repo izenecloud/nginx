@@ -2,14 +2,14 @@
 default:	build
 
 clean:
-	rm -rf Makefile /home/paolo/Projects/nginx-cmake/build/tengine
+	rm -rf Makefile /home/sky/nginx/build/tengine
 
 build:
-	$(MAKE) -f /home/paolo/Projects/nginx-cmake/build/tengine/Makefile
-	$(MAKE) -f /home/paolo/Projects/nginx-cmake/build/tengine/Makefile manpage
+	$(MAKE) -f /home/sky/nginx/build/tengine/Makefile
+	$(MAKE) -f /home/sky/nginx/build/tengine/Makefile manpage
 
 install:
-	$(MAKE) -f /home/paolo/Projects/nginx-cmake/build/tengine/Makefile install
+	$(MAKE) -f /home/sky/nginx/build/tengine/Makefile install
 
 upgrade:
 	/usr/local/nginx/sbin/nginx -t

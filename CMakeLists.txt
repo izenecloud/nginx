@@ -16,7 +16,7 @@ else()
     find_package_handle_standard_args(Prove DEFAULT_MSG PROVE_EXECUTABLE)
 endif()
 
-find_package(izenelib COMPONENTS sf1r)
+find_package(izenelib REQUIRED COMPONENTS sf1r)
 if (NOT izenelib_FOUND)
     message(FATAL "izenelib not found.")
 else()
