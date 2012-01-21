@@ -12,7 +12,7 @@ _EOC_
 
 repeat_each(1);
 
-plan tests => 3;
+plan tests => 6;
 
 no_shuffle();
 run_tests();
@@ -20,7 +20,7 @@ run_tests();
 __DATA__
 
 
-=== TEST 1: test/echo
+=== TEST 1: test/echo GET
 --- config eval: $::config
 --- request
 GET /sf1r/test/echo
@@ -29,3 +29,15 @@ GET /sf1r/test/echo
 content-type: application/json
 --- response_body eval
 "{\"header\":{\"success\":true},\"message\":\"Ciao! 你好！\"}"
+
+
+=== TEST 2: test/echo POST
+--- config eval: $::config
+--- request
+POST /sf1r/test/echo
+{"message":"Ciao! 你好！"}
+--- response_headers
+content-type: application/json
+--- response_body eval
+"{\"header\":{\"success\":true},\"message\":\"Ciao! 你好！\"}"
+
