@@ -68,6 +68,7 @@ list(APPEND CONFIGURE_ARGS "--builddir=${BUILD_DIR}")
 option(WITH_DEBUG "enable the debug logging" true)
 if(WITH_DEBUG)
     list(APPEND CONFIGURE_ARGS "--with-debug")
+    list(APPEND CONFIGURE_ARGS "--with-cc-opt=-DSDEBUG")
 endif()
 
 

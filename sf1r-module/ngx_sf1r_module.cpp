@@ -86,8 +86,9 @@ ngx_sf1r_merge_loc_conf(ngx_conf_t* cf, void* parent, void* child) {
     ngx_sf1r_loc_conf_t* conf = scast(ngx_sf1r_loc_conf_t*, child);
 
     // merge values (with defaults)
-    ngx_conf_merge_uint_value(conf->port, prev->port, 18181);
-    ngx_conf_merge_str_value(conf->address, prev->address, "localhost");
+    ngx_conf_merge_uint_value(conf->port, prev->port, SF1_DEFAULT_PORT);
+    ngx_conf_merge_str_value(conf->address, prev->address, SF1_DEFAULT_ADDR);
+
 
     return NGX_CONF_OK;
 }

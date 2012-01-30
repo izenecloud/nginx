@@ -5,8 +5,6 @@
  * Created on January 17, 2012, 11:23 AM
  */
 
-#define DDEBUG
-
 extern "C" {
 #include "ngx_sf1r_ddebug.h"
 #include "ngx_sf1r_handler.h"
