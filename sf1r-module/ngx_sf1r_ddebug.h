@@ -18,7 +18,7 @@
 #   define ck(EXPR) assert(EXPR)
 
 #   if (NGX_HAVE_VARIADIC_MACROS)
-#       define dd(...) fprintf(stderr, "sf1r *** %s: ", __func__); \
+#       define ddebug(...) fprintf(stderr, "sf1r *** %s: ", __func__); \
             fprintf(stderr, __VA_ARGS__); \
             fprintf(stderr, " at %s line %d.\n", __FILE__, __LINE__)
 #   else
@@ -28,7 +28,7 @@
 
 #include <stdarg.h>
 
-static void dd(const char * fmt, ...) {
+static void ddebug(const char * fmt, ...) {
 }
 
 #    endif
@@ -38,16 +38,16 @@ static void dd(const char * fmt, ...) {
 #   define ck(EXPR)
 
 #   if (NGX_HAVE_VARIADIC_MACROS)
-#       define dd(...)
-#       define dd_enter()
+#       define ddebug(...)
+#       define ddebug_enter()
 #   else
 
 #include <stdarg.h>
 
-static void dd(const char * fmt, ...) {
+static void ddebug(const char * fmt, ...) {
 }
 
-static void dd_enter() {
+static void ddebug_enter() {
 }
 
 #   endif

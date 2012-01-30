@@ -31,26 +31,26 @@ ngx_int_t
 ngx_sf1r_handler(ngx_http_request_t* r) {
     // response to 'GET' and 'POST' requests only
     if (!(r->method & (NGX_HTTP_GET|NGX_HTTP_POST))) {
-        dd("HTTP method not allowed, discarding");
+        ddebug("HTTP method not allowed, discarding");
         return NGX_HTTP_NOT_ALLOWED;
     }
     
     // discard header only requests
     if (r->header_only) {
-        dd("header only request, discarding");
+        ddebug("header only request, discarding");
         return NGX_HTTP_BAD_REQUEST;
     }
     
-    dd("handler ...");
+    ddebug("handler ...");
     // XXX: we have the request header but no the body!!!
     // http://forum.nginx.org/read.php?2,31312,173389
     ngx_int_t rc = ngx_http_read_client_request_body(r, ngx_sf1r_request_body_handler);
     if (rc >= NGX_HTTP_SPECIAL_RESPONSE) {
-        dd("got special response: %d", (int) rc);
+        ddebug("got special response: %d", (int) rc);
         return rc;
     }
     
-    dd("handler done");
+    ddebug("handler done");
     return NGX_DONE;
 }
 
@@ -59,14 +59,14 @@ ngx_sf1r_handler(ngx_http_request_t* r) {
 static void 
 ngx_sf1r_request_body_handler(ngx_http_request_t* r) {
     if (not check_request_body(r)) {
-        dd("no body in request, discarding");
+        ddebug("no body in request, discarding");
         ngx_http_finalize_request(r, NGX_HTTP_BAD_REQUEST);
         return;
     }
     
     /* do actual processing */
     
-    dd("reading request body ...");
+    ddebug("reading request body ...");
     
     ngx_chain_t* cl = r->request_body->bufs;   
     ngx_buf_t* buf = cl->buf;
@@ -74,12 +74,12 @@ ngx_sf1r_request_body_handler(ngx_http_request_t* r) {
     string* body;
     
     if (cl->next == NULL) {
-        dd("read from this buffer");
+        ddebug("read from this buffer");
         
         size_t len = buf->last - buf->pos;
         body = new string(rcast(char*, buf->pos), len);
     } else {
-        dd("read from next buffer");
+        ddebug("read from next buffer");
 
         ngx_buf_t* next = cl->next->buf;
         size_t len = (buf->last - buf->pos) + (next->last - next->pos);
@@ -97,13 +97,13 @@ ngx_sf1r_request_body_handler(ngx_http_request_t* r) {
         ngx_memcpy(p, next->pos, next->last - next->pos);
     }
     
-    dd("body: [%s]", body->c_str());
+    ddebug("body: [%s]", body->c_str());
         
     string uri((char*)r->uri.data, r->uri.len);
-    dd("uri: [%s]", uri.c_str());
+    ddebug("uri: [%s]", uri.c_str());
     
     string tokens = ""; // TODO
-    dd("tokens: [%s]", tokens.c_str());
+    ddebug("tokens: [%s]", tokens.c_str());
     
     ngx_sf1r_loc_conf_t* conf = scast(ngx_sf1r_loc_conf_t*, ngx_http_get_module_loc_conf(r, ngx_sf1r_module));
     
@@ -113,7 +113,7 @@ ngx_sf1r_request_body_handler(ngx_http_request_t* r) {
     Sf1Driver* driver;
     
     try {
-        dd("connecting to SF1 ...");
+        ddebug("connecting to SF1 ...");
         driver = new Sf1Driver(host, port);
     } catch (ServerError& e) {
         ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, e.what());
@@ -122,10 +122,10 @@ ngx_sf1r_request_body_handler(ngx_http_request_t* r) {
     }
 
     try {
-        dd("sending request and getting response to SF1 ...");
+        ddebug("sending request and getting response to SF1 ...");
         string response = driver->call(uri, tokens, *body);
         
-        dd("got response: %s", response.c_str());
+        ddebug("got response: %s", response.c_str());
         
         /* send response */
         ngx_int_t rc = ngx_sf1r_send_response(r, NGX_HTTP_OK, response);
@@ -144,7 +144,7 @@ ngx_sf1r_request_body_handler(ngx_http_request_t* r) {
 
 static ngx_int_t 
 ngx_sf1r_send_response(ngx_http_request_t* r, ngx_uint_t status, string& body) {
-    dd("sending response ...");
+    ddebug("sending response ...");
     
     /* set response header */
     
@@ -155,7 +155,7 @@ ngx_sf1r_send_response(ngx_http_request_t* r, ngx_uint_t status, string& body) {
     r->headers_out.content_type_len = sizeof(APPLICATION_JSON) - 1;
     r->headers_out.content_type.len = sizeof(APPLICATION_JSON) - 1;
     r->headers_out.content_type.data = (u_char*) APPLICATION_JSON;
-    dd("set response header: %zu - %s", r->headers_out.status = status, r->headers_out.content_type.data);
+    ddebug("set response header: %zu - %s", r->headers_out.status = status, r->headers_out.content_type.data);
     
     /* set response body */
     
@@ -176,7 +176,7 @@ ngx_sf1r_send_response(ngx_http_request_t* r, ngx_uint_t status, string& body) {
     ngx_chain_t out;
     out.buf = buffer;
     out.next = NULL;
-    dd("response buffer set");
+    ddebug("response buffer set");
     
     /* send the header */
     ngx_int_t rc = ngx_http_send_header(r);
@@ -191,17 +191,17 @@ ngx_sf1r_send_response(ngx_http_request_t* r, ngx_uint_t status, string& body) {
 /** return 1 if ok */
 static ngx_flag_t 
 check_request_body(ngx_http_request_t* r) {
-    dd("request body content length: %d", (int) r->headers_in.content_length_n);
+    ddebug("request body content length: %d", (int) r->headers_in.content_length_n);
     if (r->request_body == NULL) {
-        dd("request body is NULL");
+        ddebug("request body is NULL");
         return 0;
     }
     if (r->request_body->bufs == NULL) {
-        dd("request body buffer is NULL");
+        ddebug("request body buffer is NULL");
         return 0;
     }
     if (r->request_body->temp_file) {
-        dd("request body temp file is NOT NULL");
+        ddebug("request body temp file is NOT NULL");
         return 0;
     }
     return 1;

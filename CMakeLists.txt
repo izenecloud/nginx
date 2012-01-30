@@ -28,7 +28,7 @@ else()
 endif()
 
 set(Boost_ADDITIONAL_VERSIONS "1.47" "1.47.0")
-find_package(Boost 1.47.0 COMPONENTS system)
+find_package(Boost 1.47.0 REQUIRED COMPONENTS system)
 if(NOT Boost_FOUND)
     message(FATAL "Boost.system not found.")
 else()
