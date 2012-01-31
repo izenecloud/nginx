@@ -39,7 +39,6 @@ ngx_sf1r_handler(ngx_http_request_t* r) {
         return NGX_HTTP_BAD_REQUEST;
     }
     
-    ddebug("handler ...");
     // XXX: we have the request header but no the body!!!
     // http://forum.nginx.org/read.php?2,31312,173389
     ngx_int_t rc = ngx_http_read_client_request_body(r, ngx_sf1r_request_body_handler);
@@ -48,7 +47,6 @@ ngx_sf1r_handler(ngx_http_request_t* r) {
         return rc;
     }
     
-    ddebug("handler done");
     return NGX_DONE;
 }
 
@@ -104,24 +102,10 @@ ngx_sf1r_request_body_handler(ngx_http_request_t* r) {
     ddebug("tokens: [%s]", tokens.c_str());
     
     ngx_sf1r_loc_conf_t* conf = scast(ngx_sf1r_loc_conf_t*, ngx_http_get_module_loc_conf(r, ngx_sf1r_module));
-    
-    string host((char*) conf->address.data, conf->address.len);
-    uint32_t port = conf->port;
         
-    Sf1Driver* driver;
-    
-    try {
-        ddebug("connecting to SF1 ...");
-        driver = new Sf1Driver(host, port);
-    } catch (ServerError& e) {
-        ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, e.what());
-        ngx_http_finalize_request(r, NGX_HTTP_SERVICE_UNAVAILABLE);
-        return;
-    }
-
     try {
         ddebug("sending request and getting response to SF1 ...");
-        string response = driver->call(uri, tokens, *body);
+        string response = conf->driver->call(uri, tokens, *body);
         
         ddebug("got response: %s", response.c_str());
         

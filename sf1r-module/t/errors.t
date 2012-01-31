@@ -12,7 +12,7 @@ _EOC_
 
 repeat_each(1);
 
-plan tests => 4;
+plan tests => 3;
 
 no_shuffle();
 run_tests();
@@ -27,19 +27,7 @@ GET /sf1r/test/echo
 --- error_code: 400
 
 
-=== TEST 2: service unavailable
---- config
-location /sf1r/ {
-    sf1r;
-    sf1r_port 8080;
-}
---- request
-GET /sf1r/test/echo
-{"message":"Ciao! 你好！"}
---- error_code: 503
-
-
-=== TEST 3: malformed request
+=== TEST 2: malformed request
 --- config eval: $::config
 --- request
 GET /sf1r/test/echo
@@ -53,4 +41,3 @@ header test
 --- raw_request eval
 ["GET /sf1r/test/echo HTTP/1.0\r\n\r\n"]
 --- error_code: 400
-
