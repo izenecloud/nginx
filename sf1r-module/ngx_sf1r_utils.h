@@ -16,9 +16,12 @@
 #define TEXT_PLAIN              "text/plain"
 #define TEXT_HTML               "text/html"
 #define APPLICATION_JSON        "application/json"
+#define FLAG_DISABLED           0
+#define FLAG_ENABLED            1
 
 #define SF1_DEFAULT_ADDR        "localhost"
 #define SF1_DEFAULT_PORT        18181
-
+#define SF1_DEFAULT_POOL_SIZE   5
+#define SF1_DEFAULT_POOL_MAXSIZE 25
 
 #endif	/* NGX_SF1R_UTILS_H */

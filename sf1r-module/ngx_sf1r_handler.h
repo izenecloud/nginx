@@ -11,9 +11,8 @@
 #include <ngx_config.h>
 #include <ngx_http.h>
 
-
-ngx_int_t
-ngx_sf1r_handler(ngx_http_request_t* request);
+/// Directive enabling the module.
+ngx_int_t ngx_sf1r_handler(ngx_http_request_t*);
 
 
 #endif	/* NGX_SF1R_HANDLER_H */

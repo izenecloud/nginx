@@ -11,18 +11,29 @@ extern "C" {
 #include "ngx_sf1r_module.h"
 #include "ngx_sf1r_utils.h"
 }
+#include <glog/logging.h>
 #include <net/sf1r/Sf1Driver.hpp>
 #include <string>
 
 using izenelib::net::sf1r::ServerError;
+using izenelib::net::sf1r::Sf1Config;
 using izenelib::net::sf1r::Sf1Driver;
 using std::string;
 
 
-// functions declaration
+/// Activates the ngx_sf1r module.
 static char* ngx_sf1r(ngx_conf_t*, ngx_command_t*, void*);
+
+/// Handler for Sf1Driver initialization.
 static ngx_int_t ngx_sf1r_init(ngx_sf1r_loc_conf_t*);
+
+/// Handler for Sf1Driver finalization.
+static void ngx_sf1r_cleanup(void*);
+
+/// Handler for creating location configuration struct.
 static void* ngx_sf1r_create_loc_conf(ngx_conf_t*);
+
+/// Handler for merging two location configuration structs.
 static char* ngx_sf1r_merge_loc_conf(ngx_conf_t*, void*, void*);
 
 
@@ -52,6 +63,30 @@ static ngx_command_t ngx_sf1r_commands[] = {
         offsetof(ngx_sf1r_loc_conf_t, address),
         NULL
     },
+    {
+        ngx_string("sf1r_poolSize"),
+        NGX_HTTP_LOC_CONF | NGX_CONF_TAKE1,
+        ngx_conf_set_num_slot,
+        NGX_HTTP_LOC_CONF_OFFSET,
+        offsetof(ngx_sf1r_loc_conf_t, poolSize),
+        NULL
+    },
+    {
+        ngx_string("sf1r_poolResize"),
+        NGX_HTTP_LOC_CONF | NGX_CONF_TAKE1,
+        ngx_conf_set_flag_slot,
+        NGX_HTTP_LOC_CONF_OFFSET,
+        offsetof(ngx_sf1r_loc_conf_t, poolResize),
+        NULL
+    },
+    {
+        ngx_string("sf1r_poolMaxSize"),
+        NGX_HTTP_LOC_CONF | NGX_CONF_TAKE1,
+        ngx_conf_set_num_slot,
+        NGX_HTTP_LOC_CONF_OFFSET,
+        offsetof(ngx_sf1r_loc_conf_t, poolMaxSize),
+        NULL
+    },
     ngx_null_command
 };
 
@@ -72,7 +107,7 @@ static ngx_http_module_t ngx_sf1r_module_ctx = {
 };
 
 
-/// Module definition
+/// Module definition.
 ngx_module_t ngx_sf1r_module = {
     NGX_MODULE_V1,
     &ngx_sf1r_module_ctx,
@@ -94,6 +129,7 @@ ngx_sf1r_create_loc_conf(ngx_conf_t* cf) {
     // allocate module struct
     ngx_sf1r_loc_conf_t* conf = scast(ngx_sf1r_loc_conf_t*, ngx_pcalloc(cf->pool, sizeof(ngx_sf1r_loc_conf_t)));
     if (conf == NULL) {
+        ngx_log_error(NGX_LOG_ERR, cf->log, 0, "failed to allocate memory");
         return NGX_CONF_ERROR;
     }
     
@@ -101,6 +137,19 @@ ngx_sf1r_create_loc_conf(ngx_conf_t* cf) {
     conf->port = NGX_CONF_UNSET_UINT;
     conf->enabled = NGX_CONF_UNSET;
     conf->driver= NULL;
+    conf->poolSize = NGX_CONF_UNSET_UINT;
+    conf->poolResize = NGX_CONF_UNSET;
+    conf->poolMaxSize = NGX_CONF_UNSET_UINT;
+    
+    // allocate a cleanup handler
+    ngx_pool_cleanup_t* cln = ngx_pool_cleanup_add(cf->pool, 0);
+    if (cln == NULL) {
+        ngx_log_error(NGX_LOG_ERR, cf->log, 0, "failed to allocate memory");
+        return NGX_CONF_ERROR;
+    }
+
+    cln->handler = ngx_sf1r_cleanup;
+    cln->data = conf;
     
     return conf;
 }
@@ -114,9 +163,14 @@ ngx_sf1r_merge_loc_conf(ngx_conf_t* cf, void* parent, void* child) {
     // merge values (with defaults)
     ngx_conf_merge_uint_value(conf->port, prev->port, SF1_DEFAULT_PORT);
     ngx_conf_merge_str_value(conf->address, prev->address, SF1_DEFAULT_ADDR);
-    ngx_conf_merge_value(conf->enabled, prev->enabled, 0);
+    
+    ngx_conf_merge_value(conf->enabled, prev->enabled, FLAG_DISABLED);
     ngx_conf_merge_ptr_value(conf->driver, prev->driver, NULL);
-
+    
+    ngx_conf_merge_uint_value(conf->poolSize, prev->poolSize, SF1_DEFAULT_POOL_SIZE);
+    ngx_conf_merge_value(conf->poolResize, prev->poolResize, FLAG_DISABLED);
+    ngx_conf_merge_uint_value(conf->poolMaxSize, prev->poolMaxSize, SF1_DEFAULT_POOL_MAXSIZE);
+    
 #if 0 // TODO: do really use 'localhost' as default?   
     ddebug("addr: %s", conf->address.data);
     // check values
@@ -140,14 +194,17 @@ ngx_sf1r_merge_loc_conf(ngx_conf_t* cf, void* parent, void* child) {
 
 static ngx_int_t
 ngx_sf1r_init(ngx_sf1r_loc_conf_t* conf) {
-    ddebug("TODO: init driver");
-    
     string host((char*) conf->address.data, conf->address.len);
     uint32_t port = conf->port;
     
     try {
+        ddebug("init logging system ...");
+        google::InitGoogleLogging("ngx_sf1r");
+        google::SetLogDestination(google::FATAL, "sf1r");
+    
         ddebug("connecting to SF1 ...");
-        conf->driver = new Sf1Driver(host, port);
+        Sf1Config sf1conf(conf->poolSize, conf->poolResize, conf->poolMaxSize);
+        conf->driver = new Sf1Driver(host, port, sf1conf);
     } catch (ServerError& e) {
         ddebug("%s", e.what());
         return NGX_ERROR;
@@ -157,11 +214,21 @@ ngx_sf1r_init(ngx_sf1r_loc_conf_t* conf) {
 }
 
 
+static void 
+ngx_sf1r_cleanup(void* data) {
+    ngx_sf1r_loc_conf_t* conf = scast(ngx_sf1r_loc_conf_t*, data);
+    
+    if (conf->driver) {
+        delete scast(Sf1Driver*, conf->driver);
+    }
+}
+
+
 static char*
 ngx_sf1r(ngx_conf_t* cf, ngx_command_t* cmd, void* conf) {
     // get the core struct for this location
     ngx_http_core_loc_conf_t* clcf = scast(ngx_http_core_loc_conf_t*, ngx_http_conf_get_module_loc_conf(cf, ngx_http_core_module)); 
-    clcf->handler = ngx_sf1r_handler; // handler to process the 'hello' directive
+    clcf->handler = ngx_sf1r_handler;
     
     ngx_sf1r_loc_conf_t* slc = scast(ngx_sf1r_loc_conf_t*, conf);
     slc->enabled = 1;

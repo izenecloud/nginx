@@ -20,9 +20,11 @@ using izenelib::net::sf1r::Sf1Driver;
 using std::string;
 
 
+/// Callback called after getting the request body.
 static void ngx_sf1r_request_body_handler(ngx_http_request_t*);
+
 static ngx_int_t ngx_sf1r_send_response(ngx_http_request_t*, ngx_uint_t, string&);
-static ngx_flag_t check_request_body(ngx_http_request_t*);
+static ngx_flag_t ngx_sf1r_check_request_body(ngx_http_request_t*);
 
 
 ngx_int_t
@@ -39,7 +41,7 @@ ngx_sf1r_handler(ngx_http_request_t* r) {
         return NGX_HTTP_BAD_REQUEST;
     }
     
-    // XXX: we have the request header but no the body!!!
+    // we have the request header but no the body!!!
     // http://forum.nginx.org/read.php?2,31312,173389
     ngx_int_t rc = ngx_http_read_client_request_body(r, ngx_sf1r_request_body_handler);
     if (rc >= NGX_HTTP_SPECIAL_RESPONSE) {
@@ -51,10 +53,9 @@ ngx_sf1r_handler(ngx_http_request_t* r) {
 }
 
 
-/** Called after getting the request body. */
 static void 
 ngx_sf1r_request_body_handler(ngx_http_request_t* r) {
-    if (not check_request_body(r)) {
+    if (ngx_sf1r_check_request_body(r) != NGX_OK) {
         ddebug("no body in request, discarding");
         ngx_http_finalize_request(r, NGX_HTTP_BAD_REQUEST);
         return;
@@ -105,7 +106,8 @@ ngx_sf1r_request_body_handler(ngx_http_request_t* r) {
         
     try {
         ddebug("sending request and getting response to SF1 ...");
-        string response = conf->driver->call(uri, tokens, *body);
+        Sf1Driver* driver = scast(Sf1Driver*, conf->driver);
+        string response = driver->call(uri, tokens, *body);
         
         ddebug("got response: %s", response.c_str());
         
@@ -119,6 +121,10 @@ ngx_sf1r_request_body_handler(ngx_http_request_t* r) {
     } catch (ServerError& e) {
         ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, e.what());
         ngx_http_finalize_request(r, NGX_HTTP_BAD_GATEWAY);
+        return;
+    } catch (std::exception& e) {
+        ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, e.what());
+        ngx_http_finalize_request(r, NGX_HTTP_SERVICE_UNAVAILABLE);
         return;
     }
 }
@@ -170,21 +176,20 @@ ngx_sf1r_send_response(ngx_http_request_t* r, ngx_uint_t status, string& body) {
 }
 
 
-/** return 1 if ok */
 static ngx_flag_t 
-check_request_body(ngx_http_request_t* r) {
+ngx_sf1r_check_request_body(ngx_http_request_t* r) {
     ddebug("request body content length: %d", (int) r->headers_in.content_length_n);
     if (r->request_body == NULL) {
         ddebug("request body is NULL");
-        return 0;
+        return NGX_ERROR;
     }
     if (r->request_body->bufs == NULL) {
         ddebug("request body buffer is NULL");
-        return 0;
+        return NGX_ERROR;
     }
     if (r->request_body->temp_file) {
         ddebug("request body temp file is NOT NULL");
-        return 0;
+        return NGX_ERROR;
     }
-    return 1;
+    return NGX_OK;
 }

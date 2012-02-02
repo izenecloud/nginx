@@ -8,17 +8,9 @@
 #ifndef NGX_SF1R_MODULE_H
 #define	NGX_SF1R_MODULE_H
 
-extern "C" {
 #include <ngx_config.h>
 #include <ngx_core.h>
 #include <ngx_http.h>
-}
-
-
-// Forward declaration
-namespace izenelib { namespace net { namespace sf1r {
-class Sf1Driver;
-}}}
 
 
 /// Module declaration.
@@ -30,7 +22,10 @@ typedef struct {
     ngx_str_t address;
     ngx_uint_t port;
     ngx_flag_t enabled;
-    izenelib::net::sf1r::Sf1Driver* driver;
+    ngx_uint_t poolSize;
+    ngx_flag_t poolResize;
+    ngx_uint_t poolMaxSize;
+    void* driver;
 } ngx_sf1r_loc_conf_t;
 
 
