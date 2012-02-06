@@ -20,11 +20,16 @@ using izenelib::net::sf1r::Sf1Driver;
 using std::string;
 
 
+static ngx_str_t TOKENS_HEADER = ngx_string(SF1_TOKENS_HEADER);
+
 /// Callback called after getting the request body.
 static void ngx_sf1r_request_body_handler(ngx_http_request_t*);
 
-static ngx_int_t ngx_sf1r_send_response(ngx_http_request_t*, ngx_uint_t, string&);
+/// Checks if the request must be processed.
 static ngx_flag_t ngx_sf1r_check_request_body(ngx_http_request_t*);
+
+/// Sends the response.
+static ngx_int_t ngx_sf1r_send_response(ngx_http_request_t*, ngx_uint_t, string&);
 
 
 ngx_int_t
@@ -68,13 +73,15 @@ ngx_sf1r_request_body_handler(ngx_http_request_t* r) {
     ngx_chain_t* cl = r->request_body->bufs;   
     ngx_buf_t* buf = cl->buf;
     
-    string* body;
+    // get request body
+    
+    string body;
     
     if (cl->next == NULL) {
         ddebug("read from this buffer");
         
         size_t len = buf->last - buf->pos;
-        body = new string(rcast(char*, buf->pos), len);
+        body.assign(rcast(char*, buf->pos), len);
     } else {
         ddebug("read from next buffer");
 
@@ -88,45 +95,75 @@ ngx_sf1r_request_body_handler(ngx_http_request_t* r) {
             return;
         }
 
-        body = new string(rcast(char*, p), len);
+        body.assign(rcast(char*, p), len);
         
         p = ngx_cpymem(p, buf->pos, buf->last - buf->pos);
         ngx_memcpy(p, next->pos, next->last - next->pos);
     }
     
-    ddebug("body: [%s]", body->c_str());
-        
+    ddebug("body: [%s]", body.c_str());
+    
+    // get URI
+    
     string uri((char*)r->uri.data, r->uri.len);
     ddebug("uri: [%s]", uri.c_str());
     
-    string tokens = ""; // TODO
+    // get tokens
+    string tokens;
+    
+    ngx_list_part_t* part = &r->headers_in.headers.part;
+    ngx_table_elt_t* h = scast(ngx_table_elt_t*, part->elts);
+    
+    for (ngx_uint_t i = 0; ; ++i) {
+        if (i >= part->nelts) {
+            if (part->next == NULL) {
+                break;
+            }
+
+            part = part->next;
+            h = scast(ngx_table_elt_t*, part->elts);
+            i = 0;
+        }
+        
+        ddebug("header= %s: %s", h[i].key.data, h[i].value.data);
+        
+        if (h[i].key.len == TOKENS_HEADER.len 
+                and ngx_strncasecmp(h[i].key.data, 
+                                    TOKENS_HEADER.data, 
+                                    TOKENS_HEADER.len) == 0) {
+            tokens.assign((char*)h[i].value.data, h[i].key.len);
+            
+            break;
+        }            
+    }
+    
     ddebug("tokens: [%s]", tokens.c_str());
     
     ngx_sf1r_loc_conf_t* conf = scast(ngx_sf1r_loc_conf_t*, ngx_http_get_module_loc_conf(r, ngx_sf1r_module));
         
+    ngx_int_t rc;
     try {
         ddebug("sending request and getting response to SF1 ...");
         Sf1Driver* driver = scast(Sf1Driver*, conf->driver);
-        string response = driver->call(uri, tokens, *body);
+        string response = driver->call(uri, tokens, body);
         
         ddebug("got response: %s", response.c_str());
         
         /* send response */
-        ngx_int_t rc = ngx_sf1r_send_response(r, NGX_HTTP_OK, response);
-        ngx_http_finalize_request(r, rc);
+        rc = ngx_sf1r_send_response(r, NGX_HTTP_OK, response);
+        
     } catch (ClientError& e) {
         ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, e.what());
-        ngx_http_finalize_request(r, NGX_HTTP_BAD_REQUEST);
-        return;
+        rc = NGX_HTTP_BAD_REQUEST;
     } catch (ServerError& e) {
         ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, e.what());
-        ngx_http_finalize_request(r, NGX_HTTP_BAD_GATEWAY);
-        return;
+        rc = NGX_HTTP_BAD_GATEWAY;
     } catch (std::exception& e) {
         ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, e.what());
-        ngx_http_finalize_request(r, NGX_HTTP_SERVICE_UNAVAILABLE);
-        return;
+        rc = NGX_HTTP_SERVICE_UNAVAILABLE;
     }
+    
+    ngx_http_finalize_request(r, rc);
 }
     
 
