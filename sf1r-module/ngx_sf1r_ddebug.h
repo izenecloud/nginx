@@ -18,7 +18,7 @@
 #   define ck(EXPR) assert(EXPR)
 
 #   if (NGX_HAVE_VARIADIC_MACROS)
-#       define ddebug(...) fprintf(stderr, "sf1r *** %s: ", __func__); \
+#       define ddebug(...) fprintf(stderr, "ngx_sf1r *** %s: ", __func__); \
             fprintf(stderr, __VA_ARGS__); \
             fprintf(stderr, " at %s line %d.\n", __FILE__, __LINE__)
 #   else

@@ -14,13 +14,14 @@ extern "C" {
 #include <net/sf1r/Sf1Driver.hpp>
 #include <string>
 
-using izenelib::net::sf1r::ClientError;
-using izenelib::net::sf1r::ServerError;
-using izenelib::net::sf1r::Sf1Driver;
+using NS_IZENELIB_SF1R::ClientError;
+using NS_IZENELIB_SF1R::ServerError;
+using NS_IZENELIB_SF1R::Sf1Driver;
 using std::string;
 
 
 static ngx_str_t TOKENS_HEADER = ngx_string(SF1_TOKENS_HEADER);
+
 
 /// Callback called after getting the request body.
 static void ngx_sf1r_request_body_handler(ngx_http_request_t*);
@@ -105,7 +106,7 @@ ngx_sf1r_request_body_handler(ngx_http_request_t* r) {
     
     // get URI
     
-    string uri((char*)r->uri.data, r->uri.len);
+    string uri(rcast(char*, r->uri.data), r->uri.len);
     ddebug("uri: [%s]", uri.c_str());
     
     // get tokens
@@ -125,13 +126,11 @@ ngx_sf1r_request_body_handler(ngx_http_request_t* r) {
             i = 0;
         }
         
-        ddebug("header= %s: %s", h[i].key.data, h[i].value.data);
-        
         if (h[i].key.len == TOKENS_HEADER.len 
                 and ngx_strncasecmp(h[i].key.data, 
                                     TOKENS_HEADER.data, 
                                     TOKENS_HEADER.len) == 0) {
-            tokens.assign((char*)h[i].value.data, h[i].key.len);
+            tokens.assign(rcast(char*, h[i].value.data), h[i].value.len);
             
             break;
         }            

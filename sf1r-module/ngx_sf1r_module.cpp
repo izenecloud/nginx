@@ -15,9 +15,9 @@ extern "C" {
 #include <net/sf1r/Sf1Driver.hpp>
 #include <string>
 
-using izenelib::net::sf1r::ServerError;
-using izenelib::net::sf1r::Sf1Config;
-using izenelib::net::sf1r::Sf1Driver;
+using NS_IZENELIB_SF1R::ServerError;
+using NS_IZENELIB_SF1R::Sf1Config;
+using NS_IZENELIB_SF1R::Sf1Driver;
 using std::string;
 
 
@@ -186,7 +186,7 @@ ngx_sf1r_merge_loc_conf(ngx_conf_t* cf, void* parent, void* child) {
             ngx_conf_log_error(NGX_LOG_EMERG, cf, 0, "cannot connect to SF1");
             return scast(char*, NGX_CONF_ERROR);
         }
-    }
+    } 
     
     return NGX_CONF_OK;
 }
@@ -199,10 +199,12 @@ ngx_sf1r_init(ngx_sf1r_loc_conf_t* conf) {
     
     try {
         ddebug("init logging system ...");
+        
         google::InitGoogleLogging("ngx_sf1r");
-        google::SetLogDestination(google::FATAL, "sf1r");
+        //google::LogToStderr();
+        //google::SetStderrLogging(google::INFO);
     
-        ddebug("connecting to SF1 ...");
+        ddebug("instatiating driver ...");
         Sf1Config sf1conf(conf->poolSize, conf->poolResize, conf->poolMaxSize);
         conf->driver = new Sf1Driver(host, port, sf1conf);
     } catch (ServerError& e) {
@@ -218,8 +220,10 @@ static void
 ngx_sf1r_cleanup(void* data) {
     ngx_sf1r_loc_conf_t* conf = scast(ngx_sf1r_loc_conf_t*, data);
     
-    if (conf->driver) {
-        delete scast(Sf1Driver*, conf->driver);
+    if (conf->driver != NULL) {
+        ddebug("deleting driver=%p ...", conf->driver);
+        Sf1Driver* driver = scast(Sf1Driver*, conf->driver);
+        delete driver;
     }
 }
 
