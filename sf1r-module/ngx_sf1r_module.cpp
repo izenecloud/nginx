@@ -200,9 +200,7 @@ ngx_sf1r_init(ngx_sf1r_loc_conf_t* conf) {
     try {
         ddebug("init logging system ...");
         google::InitGoogleLogging("ngx_sf1r");
-        google::LogToStderr();
-        //google::SetStderrLogging(google::INFO);
-    
+        
         ddebug("instatiating driver ...");
         Sf1Config sf1conf(conf->poolSize, conf->poolResize, conf->poolMaxSize);
         conf->driver = new Sf1Driver(host, port, sf1conf);
