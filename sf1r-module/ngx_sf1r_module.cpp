@@ -199,9 +199,8 @@ ngx_sf1r_init(ngx_sf1r_loc_conf_t* conf) {
     
     try {
         ddebug("init logging system ...");
-        
         google::InitGoogleLogging("ngx_sf1r");
-        //google::LogToStderr();
+        google::LogToStderr();
         //google::SetStderrLogging(google::INFO);
     
         ddebug("instatiating driver ...");
@@ -224,6 +223,9 @@ ngx_sf1r_cleanup(void* data) {
         ddebug("deleting driver=%p ...", conf->driver);
         Sf1Driver* driver = scast(Sf1Driver*, conf->driver);
         delete driver;
+        
+        ddebug("shutting down logging system ...");
+        google::ShutdownGoogleLogging();
     }
 }
 
