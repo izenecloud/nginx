@@ -1,0 +1,45 @@
+<html>
+<head>
+    <title>Test</title>
+    <script src="http://code.jquery.com/jquery-1.7.1.js"></script>
+    <script type="text/javascript">
+    function jsRequest() {
+        var request = new XMLHttpRequest();
+        var url = 'http://localhost/sf1r/test/echo';
+        var body = '{"message":"ajax echo"}';
+        
+        request.open('POST', url, true);
+        request.onreadystatechange = function () {
+            if (request.readyState == 4) {
+                if (request.status == 200) {
+                    $("#response").html(request.responseText);
+                    $("#headers").html(request.getAllResponseHeaders());
+                } else { 
+                    alert('Status: ' + request.status);
+                }
+            }
+        };
+        
+        request.send(body);
+    }
+    </script>
+</head>
+<body>
+    <h1>Test for ngx_sf1r and Javascript</h1>
+    <h3>A simple test page that will submit a request to SF1 using Javascript.</h3>
+    <p>Please check the source code and adapt to your environment.</p>
+    
+    <label style="font-weight: bold">URI:</label>
+    <div id="uri">http://localhost/sf1r/test/echo</div>
+    <br/>
+    <label style="font-weight: bold">Request:</label>
+    <div id="request">{"message":"ajax echo"}</div>
+    <br/>
+    <button onclick="jsRequest()">Submit</button>
+    <p>
+        <label style="font-weight: bold">Response:</label>
+        <div id="response"></div><br/>
+        <div id="headers" style="font-style: italic"></div>
+    </p>
+</body>
+</html>
