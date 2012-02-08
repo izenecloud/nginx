@@ -23,6 +23,22 @@
         request.send(body);
     }
     </script>
+    <script type="text/javascript">
+    function jqRequest() {
+        $.ajax({
+            type: 'POST',
+            url: 'http://localhost/sf1r/test/echo',
+            data: '{"message":"ajax echo"}',
+            success: function(data, textStatus, jqXHR) {
+                        $("#response").html(jqXHR.responseText);
+                        $("#headers").html(jqXHR.getAllResponseHeaders());
+                    },
+            error: function(jqXHR, textStatus, errorThrown) {
+                        alert(textStatus + ': ' + errorThrown);
+                    }
+        });
+    }
+    </script>
 </head>
 <body>
     <h1>Test for ngx_sf1r and Javascript</h1>
@@ -35,7 +51,8 @@
     <label style="font-weight: bold">Request:</label>
     <div id="request">{"message":"ajax echo"}</div>
     <br/>
-    <button onclick="jsRequest()">Submit</button>
+    <button onclick="jsRequest()">JavaScript</button>
+    <button onclick="jqRequest()">jQuery</button>
     <p>
         <label style="font-weight: bold">Response:</label>
         <div id="response"></div><br/>

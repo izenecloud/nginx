@@ -33,7 +33,7 @@ __DATA__
 --- http_config eval: $::http_config
 --- config eval: $::config
 --- request
-OPTIONS /sf1r/test/echo
+POST /sf1r/test/echo
 {"message":"get request"}
 --- response_headers
 content-type: application/json

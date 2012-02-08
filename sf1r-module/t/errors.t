@@ -12,7 +12,7 @@ _EOC_
 
 repeat_each(1);
 
-plan tests => 3;
+plan tests => 7;
 
 no_shuffle();
 run_tests();
@@ -41,3 +41,14 @@ header test
 --- raw_request eval
 ["GET /sf1r/test/echo HTTP/1.0\r\n\r\n"]
 --- error_code: 400
+
+
+=== TEST 5: unsupported verbs
+--- config eval: $::config
+--- request eval
+["OPTION /sf1r/test/echo\r\n{\"message\":\"get request\"}",
+"PUT /sf1r/test/echo\r\n{\"message\":\"get request\"}",
+"DELETE /sf1r/test/echo\r\n{\"message\":\"get request\"}",
+"HEAD /sf1r/test/echo\r\n{\"message\":\"get request\"}"]
+--- error_code eval
+[405, 405, 405, 405]
