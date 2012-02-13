@@ -62,7 +62,7 @@ Module types:
 
 \begin{frame}{Components}
  \begin{enumerate}
-  \item configuration
+  \item configuration structs
   \item directives
   \item context
   \item definition
@@ -70,7 +70,7 @@ Module types:
  \end{enumerate} 
 \end{frame}
 
-\begin{frame}{Module Configuration Struct(s)}
+\begin{frame}{Components}{Configuration structs}
  \begin{itemize}
   \item up to three
   \begin{itemize}
@@ -78,32 +78,32 @@ Module types:
    \item server
    \item location
   \end{itemize}
-  \item elements in the structs are populated by module directives
+  \item populated by module directives
  \end{itemize}
 \end{frame}
 
-\begin{frame}[fragile]{Module Directives}
+\begin{frame}[fragile]{Components}{Directives}
  \begin{itemize}
   \item array of \verb|ngx_command_t| structs
   \item used for module configuration
  \end{itemize}
 \end{frame}
 
-\begin{frame}[fragile]{Module Context}
+\begin{frame}[fragile]{Components}{Context}
  \begin{itemize}
   \item an \verb|ngx_http_module_t| struct
   \item contains function references for creating and merging configurations
  \end{itemize}
 \end{frame}
 
-\begin{frame}[fragile]{Module Definition}
+\begin{frame}[fragile]{Components}{Definition}
  \begin{itemize}
   \item an \verb|ngx_module_t| struct named \verb|ngx_<module name>_module|
   \item contains references to context, directives and other callbacks
  \end{itemize}
 \end{frame}
 
-\begin{frame}{Module installation}
+\begin{frame}{Components}{Installation}
 \begin{itemize}
  \item depends on the module type 
  \item see later \ldots
@@ -179,7 +179,66 @@ Three basic steps:
 \subsection{Load-Balancer}
 
 \begin{frame}{Load-Balancer}
-TODO 
+Decide which backend server will receive a particular request
+\begin{enumerate}
+ \item enabling configuration directive
+ \item registration function
+ \item upstream initialization function
+ \item peer initialization function
+ \item load balancing function
+ \item peer release function
+\end{enumerate}
+\end{frame}
+
+\begin{frame}[fragile]{Load-Balancer}{enabling directive}
+\begin{itemize}
+ \item should have the \verb|NGX_UPS_CONF| flag set
+ \item provide a pointer to a \emph{registration function}
+\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]{Load-Balancer}{registration function}
+\begin{itemize}
+ \item define options within the \verb|upstream| configuration
+ \item register an \emph{upstream initialization function}
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Load-Balancer}{upstream initialization function}
+\begin{itemize}
+ \item resolves the server names
+ \item allocates sockets
+ \item sets a callback to the \emph{peer initialization function}
+\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]{Load-Balancer}{peer initialization function}
+\begin{itemize}
+ \item called \emph{once} per request
+ \item sets up data structures used by the \emph{load balancing function}
+ \begin{itemize}
+  \item struct named \verb|ngx_http_upstream_<module>_peer_data_t|
+ \end{itemize}
+ \item sets up two callbacks
+ \begin{description}
+  \item[get] the \emph{load-balancing function}
+  \item[free] the \emph{peer release function}
+ \end{description}
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Load-Balancer}{load balancing function}
+\begin{itemize}
+ \item called \emph{at least} per request
+ \item defines the load-balancing policy using sockets
+\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]{Load-Balancer}{peer release function}
+\begin{itemize}
+ \item operates after the upstream connection take place
+ \item at least must set \verb|pc->tries| to zero
+\end{itemize}
 \end{frame}
 
 \section{Writing Nginx Modules}
