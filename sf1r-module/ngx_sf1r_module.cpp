@@ -12,11 +12,13 @@ extern "C" {
 #include "ngx_sf1r_utils.h"
 }
 #include <glog/logging.h>
+#include <net/sf1r/Sf1DriverBase.hpp>
 #include <net/sf1r/Sf1Driver.hpp>
 #include <string>
 
 using NS_IZENELIB_SF1R::ServerError;
 using NS_IZENELIB_SF1R::Sf1Config;
+using NS_IZENELIB_SF1R::Sf1DriverBase;
 using NS_IZENELIB_SF1R::Sf1Driver;
 using std::string;
 

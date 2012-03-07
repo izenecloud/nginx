@@ -11,12 +11,12 @@ extern "C" {
 #include "ngx_sf1r_module.h"
 #include "ngx_sf1r_utils.h"
 }
-#include <net/sf1r/Sf1Driver.hpp>
+#include <net/sf1r/Sf1DriverBase.hpp>
 #include <string>
 
 using NS_IZENELIB_SF1R::ClientError;
 using NS_IZENELIB_SF1R::ServerError;
-using NS_IZENELIB_SF1R::Sf1Driver;
+using NS_IZENELIB_SF1R::Sf1DriverBase;
 using std::string;
 
 
@@ -143,7 +143,7 @@ ngx_sf1r_request_body_handler(ngx_http_request_t* r) {
     ngx_int_t rc;
     try {
         ddebug("sending request and getting response to SF1 ...");
-        Sf1Driver* driver = scast(Sf1Driver*, conf->driver);
+        Sf1DriverBase* driver = scast(Sf1DriverBase*, conf->driver);
         string response = driver->call(uri, tokens, body);
         
         ddebug("got response: %s", response.c_str());
