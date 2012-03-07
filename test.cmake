@@ -2,7 +2,7 @@
 
 set(ENV{TEST_NGINX_BINARY} ${NGINX})
 
-execute_process(COMMAND ${PROVE} -v -I${LIB} -I${INC} 
+execute_process(COMMAND ${PROVE} -v -I${LIB} -I${INC} ${FILE}
     WORKING_DIRECTORY ${DIR}
     RESULT_VARIABLE result)
 

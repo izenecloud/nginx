@@ -157,16 +157,22 @@ if (MODULE_TEST)
     message(STATUS "adding tests for modules:")
     foreach(module ${MODULE_TEST})
         set(module_dir ${nginx_SOURCE_DIR}/${module})
-        add_test(NAME test-${module}
-            COMMAND ${CMAKE_COMMAND}
-                -DNAME=${module}
-                -DPROVE=${PROVE_EXECUTABLE}
-                -DDIR=${module_dir}
-                -DLIB=${TEST_NGINX_PATH}/lib 
-                -DINC=${TEST_NGINX_PATH}/inc
-                -DNGINX=${BUILD_DIR}/nginx
-                -P ${nginx_SOURCE_DIR}/test.cmake)
-        message("\t${module}")
+        file(GLOB test_files RELATIVE ${module_dir}/t/ ${module_dir}/t/*.t)
+        list(LENGTH test_files count)
+        message("\t${module} (${count} tests found)")
+        foreach(test_file ${test_files})
+            #message("\t* found test: ${module}/${test_file}")
+            add_test(NAME ${module}/${test_file}
+                COMMAND ${CMAKE_COMMAND}
+                    -DNAME=${module}
+                    -DPROVE=${PROVE_EXECUTABLE}
+                    -DDIR=${module_dir}
+                    -DLIB=${TEST_NGINX_PATH}/lib
+                    -DINC=${TEST_NGINX_PATH}/inc
+                    -DNGINX=${BUILD_DIR}/nginx
+                    -DFILE=t/${test_file}
+                    -P ${nginx_SOURCE_DIR}/test.cmake)
+            endforeach()
     endforeach()
 endif()
 
