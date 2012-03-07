@@ -191,6 +191,13 @@ ngx_sf1r_merge_loc_conf(ngx_conf_t* cf, void* parent, void* child) {
     return NGX_CONF_OK;
 }
 
+/**
+ * Disabled explicit initialization to workaround the following
+ * glog bugs:
+ * - http://code.google.com/p/google-glog/issues/detail?id=83
+ * - http://code.google.com/p/google-glog/issues/detail?id=113
+ */
+#undef INIT_GLOG
 
 static ngx_int_t
 ngx_sf1r_init(ngx_sf1r_loc_conf_t* conf) {
@@ -198,11 +205,15 @@ ngx_sf1r_init(ngx_sf1r_loc_conf_t* conf) {
     uint32_t port = conf->port;
     
     try {
+#ifdef INIT_GLOG
         ddebug("init logging system ...");
         google::InitGoogleLogging("ngx_sf1r");
-        
+#endif
         ddebug("instatiating driver ...");
-        Sf1Config sf1conf(conf->poolSize, conf->poolResize, conf->poolMaxSize);
+        Sf1Config sf1conf;
+        sf1conf.initialSize = conf->poolSize;
+        sf1conf.resize = conf->poolResize;
+        sf1conf.maxSize = conf->poolMaxSize;
         conf->driver = new Sf1Driver(host, port, sf1conf);
     } catch (ServerError& e) {
         ddebug("%s", e.what());
@@ -221,9 +232,10 @@ ngx_sf1r_cleanup(void* data) {
         ddebug("deleting driver=%p ...", conf->driver);
         Sf1Driver* driver = scast(Sf1Driver*, conf->driver);
         delete driver;
-        
+#ifdef INIT_GLOG
         ddebug("shutting down logging system ...");
         google::ShutdownGoogleLogging();
+#endif
     }
 }
 
