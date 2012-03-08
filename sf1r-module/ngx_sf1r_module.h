@@ -20,7 +20,6 @@ extern ngx_module_t ngx_sf1r_module;
 /// Location configuration structure.
 typedef struct {
     ngx_str_t address;
-    ngx_uint_t port;
     ngx_flag_t enabled;
     ngx_uint_t poolSize;
     ngx_flag_t poolResize;

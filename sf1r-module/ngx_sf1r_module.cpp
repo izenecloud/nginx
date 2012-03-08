@@ -50,14 +50,6 @@ static ngx_command_t ngx_sf1r_commands[] = {
         NULL
     },
     {
-        ngx_string("sf1r_port"),
-        NGX_HTTP_LOC_CONF | NGX_CONF_TAKE1,
-        ngx_conf_set_num_slot,
-        NGX_HTTP_LOC_CONF_OFFSET,
-        offsetof(ngx_sf1r_loc_conf_t, port),
-        NULL,
-    },
-    {
         ngx_string("sf1r_addr"),
         NGX_HTTP_LOC_CONF | NGX_CONF_TAKE1,
         ngx_conf_set_str_slot,
@@ -136,7 +128,6 @@ ngx_sf1r_create_loc_conf(ngx_conf_t* cf) {
     }
     
     // init struct values
-    conf->port = NGX_CONF_UNSET_UINT;
     conf->enabled = NGX_CONF_UNSET;
     conf->driver= NULL;
     conf->poolSize = NGX_CONF_UNSET_UINT;
@@ -163,7 +154,7 @@ ngx_sf1r_merge_loc_conf(ngx_conf_t* cf, void* parent, void* child) {
     ngx_sf1r_loc_conf_t* conf = scast(ngx_sf1r_loc_conf_t*, child);
 
     // merge values (with defaults)
-    ngx_conf_merge_uint_value(conf->port, prev->port, SF1_DEFAULT_PORT);
+    
     ngx_conf_merge_str_value(conf->address, prev->address, SF1_DEFAULT_ADDR);
     
     ngx_conf_merge_value(conf->enabled, prev->enabled, FLAG_DISABLED);
@@ -173,14 +164,7 @@ ngx_sf1r_merge_loc_conf(ngx_conf_t* cf, void* parent, void* child) {
     ngx_conf_merge_value(conf->poolResize, prev->poolResize, FLAG_DISABLED);
     ngx_conf_merge_uint_value(conf->poolMaxSize, prev->poolMaxSize, SF1_DEFAULT_POOL_MAXSIZE);
     
-#if 0 // TODO: do really use 'localhost' as default?   
-    ddebug("addr: %s", conf->address.data);
-    // check values
-    if (ngx_strcmp(conf->address.data, "localhost")) {
-        ngx_conf_log_error(NGX_LOG_EMERG, cf, 0, "sf1r_addr must be defined");
-        return scast(char*, NGX_CONF_ERROR);
-    }
-#endif
+    // init
     
     if (conf->enabled && conf->driver == NULL) {
         ngx_int_t rc = ngx_sf1r_init(conf);
@@ -204,7 +188,6 @@ ngx_sf1r_merge_loc_conf(ngx_conf_t* cf, void* parent, void* child) {
 static ngx_int_t
 ngx_sf1r_init(ngx_sf1r_loc_conf_t* conf) {
     string host((char*) conf->address.data, conf->address.len);
-    uint32_t port = conf->port;
     
     try {
 #ifdef INIT_GLOG
@@ -216,7 +199,7 @@ ngx_sf1r_init(ngx_sf1r_loc_conf_t* conf) {
         sf1conf.initialSize = conf->poolSize;
         sf1conf.resize = conf->poolResize;
         sf1conf.maxSize = conf->poolMaxSize;
-        conf->driver = new Sf1Driver(host, port, sf1conf);
+        conf->driver = new Sf1Driver(host, sf1conf);
     } catch (ServerError& e) {
         ddebug("%s", e.what());
         return NGX_ERROR;

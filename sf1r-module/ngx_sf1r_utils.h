@@ -19,8 +19,7 @@
 #define FLAG_DISABLED           0
 #define FLAG_ENABLED            1
 
-#define SF1_DEFAULT_ADDR        "localhost"
-#define SF1_DEFAULT_PORT        18181
+#define SF1_DEFAULT_ADDR        "localhost:18181"
 #define SF1_DEFAULT_POOL_SIZE   5
 #define SF1_DEFAULT_POOL_MAXSIZE 25
 
