@@ -15,6 +15,7 @@ extern "C" {
 #include <string>
 
 using NS_IZENELIB_SF1R::ClientError;
+using NS_IZENELIB_SF1R::RoutingError;
 using NS_IZENELIB_SF1R::ServerError;
 using NS_IZENELIB_SF1R::Sf1DriverBase;
 using std::string;
@@ -152,14 +153,17 @@ ngx_sf1r_request_body_handler(ngx_http_request_t* r) {
         rc = ngx_sf1r_send_response(r, NGX_HTTP_OK, response);
         
     } catch (ClientError& e) {
-        ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, e.what());
+        ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "ClientError: %s", e.what());
         rc = NGX_HTTP_BAD_REQUEST;
     } catch (ServerError& e) {
-        ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, e.what());
+        ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "ServerError: %s", e.what());
         rc = NGX_HTTP_BAD_GATEWAY;
-    } catch (std::exception& e) {
-        ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, e.what());
+    } catch (RoutingError& e) {
+        ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "RoutingError: %s", e.what());
         rc = NGX_HTTP_SERVICE_UNAVAILABLE;
+    } catch (std::exception& e) {
+        ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "exception: ", e.what());
+        rc = NGX_HTTP_INTERNAL_SERVER_ERROR;
     }
     
     ngx_http_finalize_request(r, rc);
