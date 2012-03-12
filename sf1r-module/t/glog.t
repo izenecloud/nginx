@@ -11,7 +11,6 @@ our $config = <<'_EOC_';
     location /b/ {
         rewrite ^/b(/.*)$ $1 break;
         sf1r;
-        sf1r_addr 172.16.0.162;
     }
 _EOC_
 
