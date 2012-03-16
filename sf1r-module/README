@@ -1,0 +1,15 @@
+ISSUES
+===
+
+GNU C Library page warning about using threads and fork:
+
+    Because threads are not inherited across fork, issues arise. 
+    At the time of the call to fork, threads in the parent process 
+    other than the one calling fork may have been executing critical 
+    regions of code. As a result, the child process may get a copy 
+    of objects that are not in a well-defined state. This potential 
+    problem affects all components of the program. 
+
+References:
+[1] http://www.viraj.org/b2evolution/blogs/index.php/2007/02/10/threads_and_fork_a_bad_idea
+[2] http://www.imodulo.com/gnu/glibc/Threads-and-Fork.html
