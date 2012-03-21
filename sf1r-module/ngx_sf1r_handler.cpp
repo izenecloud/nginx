@@ -180,6 +180,8 @@ ngx_sf1r_send_response(ngx_http_request_t* r, ngx_uint_t status, string& body) {
     r->headers_out.status = status;
     
     r->headers_out.content_length_n = body.length();
+    
+    // TODO: set content type according to Sf1Config (parameter: JSON/XML)
     r->headers_out.content_type_len = sizeof(APPLICATION_JSON) - 1;
     r->headers_out.content_type.len = sizeof(APPLICATION_JSON) - 1;
     r->headers_out.content_type.data = (u_char*) APPLICATION_JSON;
