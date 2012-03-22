@@ -27,8 +27,10 @@ __DATA__
 === TEST 1: glog init
 --- config eval: $::config
 --- request eval
-["GET /a/test/echo\r\n{\"message\":\"echo a\"}",
- "GET /b/test/echo\r\n{\"message\":\"echo b\"}"]
+[qq(GET /a/test/echo\r\n{"message":"echo a"})
+,qq(GET /b/test/echo\r\n{"message":"echo b"})
+]
 --- response_body eval
-["{\"header\":{\"success\":true},\"message\":\"echo a\"}",
- "{\"header\":{\"success\":true},\"message\":\"echo b\"}"]
+[qq({"header":{"success":true},"message":"echo a"})
+,qq({"header":{"success":true},"message":"echo b"})
+]

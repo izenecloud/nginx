@@ -28,7 +28,7 @@ GET /sf1r/test/echo
 --- response_headers
 content-type: application/json
 --- response_body eval
-"{\"header\":{\"success\":true},\"message\":\"Ciao! 你好！\"}"
+qq({"header":{"success":true},"message":"Ciao! 你好！"})
 
 
 === TEST 2: test/echo POST
@@ -39,5 +39,4 @@ POST /sf1r/test/echo
 --- response_headers
 content-type: application/json
 --- response_body eval
-"{\"header\":{\"success\":true},\"message\":\"Ciao! 你好！\"}"
-
+qq({"header":{"success":true},"message":"Ciao! 你好！"})

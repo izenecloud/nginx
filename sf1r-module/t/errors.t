@@ -46,9 +46,10 @@ header test
 === TEST 5: unsupported verbs
 --- config eval: $::config
 --- request eval
-["OPTION /sf1r/test/echo\r\n{\"message\":\"get request\"}",
-"PUT /sf1r/test/echo\r\n{\"message\":\"get request\"}",
-"DELETE /sf1r/test/echo\r\n{\"message\":\"get request\"}",
-"HEAD /sf1r/test/echo\r\n{\"message\":\"get request\"}"]
+[qq(OPTION /sf1r/test/echo\r\n{"message":"get request"})
+,qq(PUT /sf1r/test/echo\r\n{"message":"get request"})
+,qq(DELETE /sf1r/test/echo\r\n{"message":"get request"})
+,qq(HEAD /sf1r/test/echo\r\n{"message":"get request"})
+]
 --- error_code eval
 [405, 405, 405, 405]
