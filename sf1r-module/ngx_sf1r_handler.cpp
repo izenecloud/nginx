@@ -79,16 +79,23 @@ ngx_sf1r_request_body_handler(ngx_http_request_t* r) {
     
     string body;
     
-    if (cl->next == NULL) {
-        ddebug("read from this buffer");
+    ddebug("read from the first buffer");
         
-        size_t len = buf->last - buf->pos;
-        body.assign(rcast(char*, buf->pos), len);
-    } else {
-        ddebug("read from next buffer");
+    size_t len = buf->last - buf->pos;
+    body.assign(rcast(char*, buf->pos), len);
+    
+#ifdef SDEBUG
+    string buff1(rcast(char*, buf->pos), len);
+    ddebug("buff1:\n%s\n", buff1.c_str());
+#endif
+    
+    if (cl->next != NULL) {
+        string tmp;
+        
+        ddebug("read from the next buffers");
 
         ngx_buf_t* next = cl->next->buf;
-        size_t len = (buf->last - buf->pos) + (next->last - next->pos);
+        len = (buf->last - buf->pos) + (next->last - next->pos);
         
         u_char* p = scast(u_char*, ngx_pnalloc(r->pool, len));
         if (p == NULL) {
@@ -97,12 +104,17 @@ ngx_sf1r_request_body_handler(ngx_http_request_t* r) {
             return;
         }
 
-        body.assign(rcast(char*, p), len);
-        
         p = ngx_cpymem(p, buf->pos, buf->last - buf->pos);
         ngx_memcpy(p, next->pos, next->last - next->pos);
+        
+        body.append(rcast(char*, p), len);
+        
+#ifdef SDEBUG
+        string buff2(rcast(char*, p), len);
+        ddebug("buff2:\n%s\n", p);
+#endif
     }
-    
+
     ddebug("body: [%s]", body.c_str());
     
     // get URI
