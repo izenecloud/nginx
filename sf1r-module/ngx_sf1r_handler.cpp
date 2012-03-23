@@ -73,14 +73,11 @@ ngx_sf1r_request_body_handler(ngx_http_request_t* r) {
     ddebug("reading request body ...");
     
     ngx_chain_t* cl = r->request_body->bufs;   
-    ngx_buf_t* buf = cl->buf;
-    
-    // get request body
-    
     string body;
     
     ddebug("read from the first buffer");
-        
+    
+    ngx_buf_t* buf = cl->buf;
     size_t len = buf->last - buf->pos;
     body.assign(rcast(char*, buf->pos), len);
     
@@ -95,23 +92,12 @@ ngx_sf1r_request_body_handler(ngx_http_request_t* r) {
         ddebug("read from the next buffers");
 
         ngx_buf_t* next = cl->next->buf;
-        len = (buf->last - buf->pos) + (next->last - next->pos);
-        
-        u_char* p = scast(u_char*, ngx_pnalloc(r->pool, len));
-        if (p == NULL) {
-            ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "Failed to allocate request body buffer.");
-            ngx_http_finalize_request(r, NGX_HTTP_INTERNAL_SERVER_ERROR);
-            return;
-        }
-
-        p = ngx_cpymem(p, buf->pos, buf->last - buf->pos);
-        ngx_memcpy(p, next->pos, next->last - next->pos);
-        
-        body.append(rcast(char*, p), len);
+        len = next->last - next->pos;
+        body.append(rcast(char*, next->pos), len);
         
 #ifdef SDEBUG
-        string buff2(rcast(char*, p), len);
-        ddebug("buff2:\n%s\n", p);
+        string buff2(rcast(char*, next->pos), len);
+        ddebug("buff2:\n%s\n", buff2.c_str());
 #endif
     }
 
