@@ -47,69 +47,29 @@ ngx_sf1r_handler(ngx_http_request_t* r) {
         ddebug("header only request, discarding");
         return NGX_HTTP_BAD_REQUEST;
     }
-    
-    // we have the request header but no the body!!!
-    // http://forum.nginx.org/read.php?2,31312,173389
-    ngx_int_t rc = ngx_http_read_client_request_body(r, ngx_sf1r_request_body_handler);
-    if (rc >= NGX_HTTP_SPECIAL_RESPONSE) {
-        ddebug("got special response: %d", (int) rc);
-        return rc;
-    }
-    
-    return NGX_DONE;
-}
 
-
-static void 
-ngx_sf1r_request_body_handler(ngx_http_request_t* r) {
-    if (ngx_sf1r_check_request_body(r) != NGX_OK) {
-        ddebug("no body in request, discarding");
-        ngx_http_finalize_request(r, NGX_HTTP_BAD_REQUEST);
-        return;
-    }
-    
-    /* do actual processing */
-    
-    ddebug("reading request body ...");
-    
-    ngx_chain_t* cl = r->request_body->bufs;   
-    string body;
-    
-    ddebug("read from the first buffer");
-    
-    ngx_buf_t* buf = cl->buf;
-    size_t len = buf->last - buf->pos;
-    body.assign(rcast(char*, buf->pos), len);
-    
-#ifdef SDEBUG
-    string buff1(rcast(char*, buf->pos), len);
-    ddebug("buff1:\n%s\n", buff1.c_str());
-#endif
-    
-    if (cl->next != NULL) {
-        string tmp;
-        
-        ddebug("read from the next buffers");
-
-        ngx_buf_t* next = cl->next->buf;
-        len = next->last - next->pos;
-        body.append(rcast(char*, next->pos), len);
-        
-#ifdef SDEBUG
-        string buff2(rcast(char*, next->pos), len);
-        ddebug("buff2:\n%s\n", buff2.c_str());
-#endif
+    // set context
+    ngx_sf1r_ctx_t* ctx = scast(ngx_sf1r_ctx_t*, ngx_pcalloc(r->pool, sizeof(ngx_sf1r_ctx_t)));
+    if (ctx == NULL) {
+        ngx_log_error(NGX_LOG_ERR, r->pool->log, 0, "failed to allocate memory");
+        return NGX_HTTP_INTERNAL_SERVER_ERROR;
     }
 
-    ddebug("body: [%s]", body.c_str());
+    ngx_http_set_ctx(r, ctx, ngx_sf1r_module);
+    ddebug("request contex set");
+    
+    /* process header */
+    
+    ctx->body_len = r->headers_in.content_length_n;
+    ddebug("   len: [%u]", (unsigned) ctx->body_len);
     
     // get URI
     
-    string uri(rcast(char*, r->uri.data), r->uri.len);
-    ddebug("uri: [%s]", uri.c_str());
+    ctx->uri.data = r->uri.data;
+    ctx->uri.len = r->uri.len;
+    ddebug("   uri: [%s]", ctx->uri.data);
     
     // get tokens
-    string tokens;
     
     ngx_list_part_t* part = &r->headers_in.headers.part;
     ngx_table_elt_t* h = scast(ngx_table_elt_t*, part->elts);
@@ -125,27 +85,106 @@ ngx_sf1r_request_body_handler(ngx_http_request_t* r) {
             i = 0;
         }
         
-        if (h[i].key.len == TOKENS_HEADER.len 
-                and ngx_strncasecmp(h[i].key.data, 
-                                    TOKENS_HEADER.data, 
+        if (h[i].key.len == TOKENS_HEADER.len
+                and ngx_strncasecmp(h[i].key.data,
+                                    TOKENS_HEADER.data,
                                     TOKENS_HEADER.len) == 0) {
-            tokens.assign(rcast(char*, h[i].value.data), h[i].value.len);
+            ctx->tokens.data = h[i].value.data;
+            ctx->tokens.len = h[i].value.len;
             
             break;
-        }            
+        }
+    }
+    if (ctx->tokens.len == 0) ctx->tokens.data = (u_char*) "";
+    ddebug("tokens: [%s]", ctx->tokens.data);
+    
+    /* process body */
+    // we have the request header but no the body!!!
+    // http://forum.nginx.org/read.php?2,31312,173389
+    ngx_int_t rc = ngx_http_read_client_request_body(r, ngx_sf1r_request_body_handler);
+    if (rc >= NGX_HTTP_SPECIAL_RESPONSE) {
+        ddebug("got special response: %d", (int) rc);
+        return rc;
     }
     
-    ddebug("tokens: [%s]", tokens.c_str());
+    return NGX_DONE;
+}
+
+
+static inline ngx_flag_t
+ngx_sf1r_check_request_body(ngx_http_request_t* r) {
+    if (r->request_body == NULL) {
+        ddebug("request body is NULL");
+        return NGX_ERROR;
+    }
+    if (r->request_body->bufs == NULL) {
+        ddebug("request body buffer is NULL");
+        return NGX_ERROR;
+    }
+    if (r->request_body->temp_file) {
+        ddebug("request body temp file is NOT NULL");
+        return NGX_ERROR;
+    }
+    return NGX_OK;
+}
+
+
+static void 
+ngx_sf1r_request_body_handler(ngx_http_request_t* r) {
+    if (ngx_sf1r_check_request_body(r) != NGX_OK) {
+        ddebug("no body in request, discarding");
+        ngx_http_finalize_request(r, NGX_HTTP_BAD_REQUEST);
+        return;
+    }
+    
+    /* do actual processing */
+    
+    ddebug("reading request body ...");
+    
+    string body;
+    ngx_chain_t* cl = r->request_body->bufs;
+    
+    ddebug("read from the first buffer");
+    
+    ngx_buf_t* buf = cl->buf;
+    size_t len = buf->last - buf->pos;
+    body.assign(rcast(char*, buf->pos), len);
+    
+#ifdef SDEBUG
+    string buff1(rcast(char*, buf->pos), len);
+    ddebug("buff1:\n[%s]\n", buff1.c_str());
+#endif
+    
+    if (cl->next != NULL) {
+        string tmp;
+        
+        ddebug("read from the next buffers");
+
+        ngx_buf_t* next = cl->next->buf;
+        len = next->last - next->pos;
+        body.append(rcast(char*, next->pos), len);
+        
+#ifdef SDEBUG
+        string buff2(rcast(char*, next->pos), len);
+        ddebug("buff2:\n[%s]\n", buff2.c_str());
+#endif
+    }
+
+    ddebug("body:\n[%s]\n", body.c_str());
     
     ngx_sf1r_loc_conf_t* conf = scast(ngx_sf1r_loc_conf_t*, ngx_http_get_module_loc_conf(r, ngx_sf1r_module));
-        
+    ngx_sf1r_ctx_t* ctx = scast(ngx_sf1r_ctx_t*, ngx_http_get_module_ctx(r, ngx_sf1r_module));
+    
     ngx_int_t rc;
     try {
         ddebug("sending request and getting response to SF1 ...");
         Sf1DriverBase* driver = scast(Sf1DriverBase*, conf->driver);
-        string response = driver->call(uri, tokens, body);
         
-        ddebug("got response: %s", response.c_str());
+        string uri(rcast(char*, ctx->uri.data), ctx->uri.len);
+        string tokens(rcast(char*, ctx->tokens.data), ctx->tokens.len);
+        
+        string response = driver->call(uri, tokens, body);
+        ddebug("response:\n[%s]", response.c_str());
         
         /* send response */
         rc = ngx_sf1r_send_response(r, NGX_HTTP_OK, response);
@@ -183,6 +222,7 @@ ngx_sf1r_send_response(ngx_http_request_t* r, ngx_uint_t status, string& body) {
     r->headers_out.content_type_len = sizeof(APPLICATION_JSON) - 1;
     r->headers_out.content_type.len = sizeof(APPLICATION_JSON) - 1;
     r->headers_out.content_type.data = (u_char*) APPLICATION_JSON;
+    
     ddebug("set response header: %zu - %s", r->headers_out.status = status, r->headers_out.content_type.data);
     
     /* set response body */
@@ -213,23 +253,4 @@ ngx_sf1r_send_response(ngx_http_request_t* r, ngx_uint_t status, string& body) {
     }
     
     return ngx_http_output_filter(r, &out);
-}
-
-
-static ngx_flag_t 
-ngx_sf1r_check_request_body(ngx_http_request_t* r) {
-    ddebug("request body content length: %d", (int) r->headers_in.content_length_n);
-    if (r->request_body == NULL) {
-        ddebug("request body is NULL");
-        return NGX_ERROR;
-    }
-    if (r->request_body->bufs == NULL) {
-        ddebug("request body buffer is NULL");
-        return NGX_ERROR;
-    }
-    if (r->request_body->temp_file) {
-        ddebug("request body temp file is NOT NULL");
-        return NGX_ERROR;
-    }
-    return NGX_OK;
 }

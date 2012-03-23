@@ -24,11 +24,17 @@ typedef struct {
     ngx_uint_t poolSize;
     ngx_flag_t poolResize;
     ngx_uint_t poolMaxSize;
-    //ngx_str_t zkHosts;
     ngx_uint_t zkTimeout;
     void* driver;
     ngx_flag_t distributed;
 } ngx_sf1r_loc_conf_t;
 
+
+/// Request context structure.
+typedef struct {
+    ngx_str_t uri;
+    ngx_str_t tokens;
+    ngx_uint_t body_len;
+} ngx_sf1r_ctx_t;
 
 #endif	/* NGX_SF1R_MODULE_H */
