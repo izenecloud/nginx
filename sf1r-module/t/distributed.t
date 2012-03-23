@@ -5,7 +5,7 @@ use Test::Nginx::Socket;
 
 repeat_each(1);
 
-plan tests => 3 * 3 * blocks();
+plan tests => 1 + (3 * 3 * (blocks() - 1));
 
 no_shuffle();
 run_tests();
@@ -13,7 +13,18 @@ run_tests();
 __DATA__
 
 
-=== TEST 1: distributed driver
+=== TEST 1: connection error
+--- config
+location /sf1r/ {
+    sf1r;
+    sf1r_addr somehost:2181 distributed;
+}
+--- request
+GET /sf1r/test/echo
+{"message":"Ciao! 你好！"}
+--- error_code: 502
+
+=== TEST 2: distributed driver
 --- config
 location /sf1r/ {
     rewrite ^/sf1r/(.*)$ $1 break;
@@ -25,11 +36,6 @@ location /sf1r/ {
 ["GET /sf1r/test/echo\r\n{\"message\":\"Ciao! 你好！\"}"
 ,"GET /sf1r/documents/search\r\n{\"collection\":\"example\",\"header\":{\"check_time\":true},\"search\":{\"keywords\":\"america\"},\"limit\":10}"
 ,"POST /sf1r/documents/search\r\n{\"collection\":\"example\",\"header\":{\"check_time\":true},\"search\":{\"keywords\":\"america\"}, \"limit\":10}"
-]
---- response_headers eval
-["content-type: application/json"
-,"content-type: application/json"
-,"content-type: application/json"
 ]
 --- response_body_like eval
 ["\"header\":{\"success\":true}"
