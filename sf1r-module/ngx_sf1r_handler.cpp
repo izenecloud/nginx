@@ -61,7 +61,7 @@ ngx_sf1r_handler(ngx_http_request_t* r) {
     /* process header */
     
     ctx->body_len = r->headers_in.content_length_n;
-    ddebug("   len: [%u]", (unsigned) ctx->body_len);
+    ddebug("   len: [%zu]", ctx->body_len);
     
     // get URI
     
@@ -99,8 +99,7 @@ ngx_sf1r_handler(ngx_http_request_t* r) {
     ddebug("tokens: [%s]", ctx->tokens.data);
     
     /* process body */
-    // we have the request header but no the body!!!
-    // http://forum.nginx.org/read.php?2,31312,173389
+    
     ngx_int_t rc = ngx_http_read_client_request_body(r, ngx_sf1r_request_body_handler);
     if (rc >= NGX_HTTP_SPECIAL_RESPONSE) {
         ddebug("got special response: %d", (int) rc);
@@ -121,10 +120,6 @@ ngx_sf1r_check_request_body(ngx_http_request_t* r) {
         ddebug("request body buffer is NULL");
         return NGX_ERROR;
     }
-    if (r->request_body->temp_file) {
-        ddebug("request body temp file is NOT NULL");
-        return NGX_ERROR;
-    }
     return NGX_OK;
 }
 
@@ -137,6 +132,8 @@ ngx_sf1r_request_body_handler(ngx_http_request_t* r) {
         return;
     }
     
+    ngx_sf1r_ctx_t* ctx = scast(ngx_sf1r_ctx_t*, ngx_http_get_module_ctx(r, ngx_sf1r_module));
+    
     /* do actual processing */
     
     ddebug("reading request body ...");
@@ -144,36 +141,35 @@ ngx_sf1r_request_body_handler(ngx_http_request_t* r) {
     string body;
     ngx_chain_t* cl = r->request_body->bufs;
     
-    ddebug("read from the first buffer");
-    
     ngx_buf_t* buf = cl->buf;
     size_t len = buf->last - buf->pos;
+    ddebug("first buffer: %zu of %zu", len, ctx->body_len);
     body.assign(rcast(char*, buf->pos), len);
-    
-#ifdef SDEBUG
-    string buff1(rcast(char*, buf->pos), len);
-    ddebug("buff1:\n[%s]\n", buff1.c_str());
-#endif
+    ddebug("first buffer:\n[%s]\n", body.c_str());
     
     if (cl->next != NULL) {
-        string tmp;
+        ddebug("reading from the second buffer ...");
         
-        ddebug("read from the next buffers");
-
-        ngx_buf_t* next = cl->next->buf;
-        len = next->last - next->pos;
-        body.append(rcast(char*, next->pos), len);
-        
-#ifdef SDEBUG
-        string buff2(rcast(char*, next->pos), len);
-        ddebug("buff2:\n[%s]\n", buff2.c_str());
-#endif
+        if (r->request_body->temp_file) {
+            len = ctx->body_len - len;
+            u_char buffer[len];
+            ngx_read_file(&r->request_body->temp_file->file, buffer, len, 0);
+            ddebug("file buffer: %zu of %zu", len, ctx->body_len);
+            body.append(rcast(char*, buffer), len);
+            ddebug("file buffer:\n[%s]\n", buffer);
+        } else {
+            ngx_buf_t* next = cl->next->buf;
+            len = next->last - next->pos;
+            ddebug("memory buffer: %zu of %zu", len, ctx->body_len);
+            
+            body.append(rcast(char*, next->pos), len);
+            ddebug("memory buffer:\n[%s]\n", string(rcast(char*, next->pos), len).c_str());
+        }
     }
 
     ddebug("body:\n[%s]\n", body.c_str());
     
     ngx_sf1r_loc_conf_t* conf = scast(ngx_sf1r_loc_conf_t*, ngx_http_get_module_loc_conf(r, ngx_sf1r_module));
-    ngx_sf1r_ctx_t* ctx = scast(ngx_sf1r_ctx_t*, ngx_http_get_module_ctx(r, ngx_sf1r_module));
     
     ngx_int_t rc;
     try {
