@@ -67,12 +67,14 @@ list(APPEND CONFIGURE_ARGS "--builddir=${BUILD_DIR}")
 
 
 # debugging log
+option(WITH_NGINX_DEBUG "enable the debug logging" false)
+if(WITH_NGINX_DEBUG)
+    list(APPEND CONFIGURE_ARGS "--with-debug")
+endif()
 option(WITH_DEBUG "enable the debug logging" false)
 if(WITH_DEBUG)
-    list(APPEND CONFIGURE_ARGS "--with-debug")
     list(APPEND CONFIGURE_ARGS "--with-cc-opt=-DSDEBUG")
 endif()
-
 
 # nginx configuration options
 option(WITH_REWRITE "enable the http_rewrite module" true)
