@@ -17,11 +17,7 @@ extern "C" {
 #include <net/sf1r/distributed/Sf1DistributedDriver.hpp>
 #include <string>
 
-using NS_IZENELIB_SF1R::ServerError;
-using NS_IZENELIB_SF1R::Sf1Config;
-using NS_IZENELIB_SF1R::Sf1DriverBase;
-using NS_IZENELIB_SF1R::Sf1Driver;
-using NS_IZENELIB_SF1R::Sf1DistributedDriver;
+using namespace NS_IZENELIB_SF1R;
 using std::string;
 
 
@@ -244,18 +240,25 @@ ngx_sf1r_init(ngx_sf1r_loc_conf_t* conf) {
 #endif
         ddebug("instantiating driver ...");
         
-        Sf1Config sf1conf;
-        sf1conf.initialSize = conf->poolSize;
-        sf1conf.resize = conf->poolResize;
-        sf1conf.maxSize = conf->poolMaxSize;
-        sf1conf.timeout = conf->zkTimeout;
-        
         string host((char*) conf->address.data, conf->address.len);
         if (conf->distributed) {
             ddebug("using distributed driver");
+            
+            Sf1DistributedConfig sf1conf;
+            sf1conf.initialSize = conf->poolSize;
+            sf1conf.resize = conf->poolResize;
+            sf1conf.maxSize = conf->poolMaxSize;
+            sf1conf.timeout = conf->zkTimeout;
+        
             conf->driver = new Sf1DistributedDriver(host, sf1conf);
         } else {
             ddebug("using single driver");
+            
+            Sf1Config sf1conf;
+            sf1conf.initialSize = conf->poolSize;
+            sf1conf.resize = conf->poolResize;
+            sf1conf.maxSize = conf->poolMaxSize;
+        
             conf->driver = new Sf1Driver(host, sf1conf);
         }
     } catch (ServerError& e) {
