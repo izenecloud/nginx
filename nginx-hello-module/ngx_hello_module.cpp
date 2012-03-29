@@ -23,13 +23,15 @@ extern "C" {
 
 /// Location configuration structure.
 typedef struct {
-    ngx_uint_t hello_count; ///< test int 
-    ngx_str_t  hello_str;  ///< test string
+    ngx_uint_t   hello_count; ///< test int 
+    ngx_str_t    hello_str;   ///< test string
+    ngx_array_t* hello_arr;   ///< test array of strings
 } ngx_hello_loc_conf_t;
 
 
 // functions declaration
 static char* ngx_hello(ngx_conf_t*, ngx_command_t*, void*);
+static char* ngx_hello_arr_add(ngx_conf_t*, ngx_command_t*, void*);
 static void* ngx_hello_create_loc_conf(ngx_conf_t*);
 static char* ngx_hello_merge_loc_conf(ngx_conf_t*, void*, void*);
 
@@ -60,6 +62,14 @@ static ngx_command_t ngx_hello_commands[] = {
         offsetof(ngx_hello_loc_conf_t, hello_str),
         NULL
     },
+    {
+        ngx_string("hello_arr"),
+        NGX_HTTP_LOC_CONF | NGX_CONF_TAKE1,
+        ngx_hello_arr_add,
+        NGX_HTTP_LOC_CONF_OFFSET,
+        offsetof(ngx_hello_loc_conf_t, hello_arr),
+        NULL
+    },
     ngx_null_command
 };
 
@@ -88,6 +98,11 @@ ngx_hello_create_loc_conf(ngx_conf_t* cf) {
         return NGX_CONF_ERROR;
     }
     
+    /*
+     * initialized by ngx_pcalloc:
+     * - conf->hello_arr = NULL
+     */
+    
     // init struct values
     conf->hello_count = NGX_CONF_UNSET_UINT;
     
@@ -104,6 +119,10 @@ ngx_hello_merge_loc_conf(ngx_conf_t* cf, void* parent, void* child) {
     ngx_conf_merge_uint_value(conf->hello_count, prev->hello_count, DEFAULT_COUNT);
     ngx_conf_merge_str_value(conf->hello_str, prev->hello_str, DEFAULT_STRING);
 
+    if (conf->hello_arr == NULL) {
+        conf->hello_arr = prev->hello_arr;
+    }
+    
     // check values
     if (conf->hello_count < 1) {
         ngx_conf_log_error(NGX_LOG_EMERG, cf, 0, "hello_count radius must be equal or more than 1");
@@ -131,6 +150,35 @@ ngx_module_t ngx_hello_module = {
 };
 
 
+static char*
+ngx_hello_arr_add(ngx_conf_t* cf, ngx_command_t* cmd, void* conf) {
+    ngx_hello_loc_conf_t* hlcf = CAST(ngx_hello_loc_conf_t*, conf);
+    
+    // create array
+    if (hlcf->hello_arr == NULL) {
+        hlcf->hello_arr = ngx_array_create(cf->pool, 1, sizeof(ngx_str_t)); // FIXME magic number: 1
+        
+        if (hlcf->hello_arr == NULL) {
+            return (char*) NGX_CONF_ERROR;
+        }
+    }
+    
+    // allocate space for new element
+    ngx_str_t* av = CAST(ngx_str_t*, ngx_array_push(hlcf->hello_arr));
+    if (av == NULL) {
+        return (char*) NGX_CONF_ERROR;
+    }
+    
+    // set element value
+    ngx_str_t* value = CAST(ngx_str_t*, cf->args->elts);
+    av->len = value[1].len;
+    av->data = value[1].data;
+    ngx_log_debug1(NGX_LOG_NOTICE, cf->log, 0, "value = %s", av->data);
+    
+    return NGX_CONF_OK;
+}
+
+
 static ngx_int_t
 ngx_hello_handler(ngx_http_request_t* request) {
     ngx_log_error(NGX_LOG_NOTICE, request->connection->log, 0, "hello handler");
@@ -142,12 +190,19 @@ ngx_hello_handler(ngx_http_request_t* request) {
     }
 
     /* do actual processing */
-    const char* hello_str = (const char*) conf->hello_str.data;
-    std::string helloString(hello_str);
+    
+    std::string helloString((const char*) conf->hello_str.data);
     for (ngx_uint_t i = 1; i < conf->hello_count; ++i) {
         helloString.append("\n").append((const char*)conf->hello_str.data);
     }
-    ngx_log_error(NGX_LOG_DEBUG, request->connection->log, 0, "hello: %s", helloString.c_str());
+    
+    if (conf->hello_arr != NULL) {
+        ngx_str_t* val = CAST(ngx_str_t*, conf->hello_arr->elts);
+        for (ngx_uint_t i = 0; i < conf->hello_arr->nelts; ++i) {
+            helloString.append("\n").append((const char*)val[i].data);
+        }
+        ngx_log_error(NGX_LOG_DEBUG, request->connection->log, 0, "hello: %s", helloString.c_str());
+    }
     
     /* set response header */
     

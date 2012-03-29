@@ -1,20 +1,20 @@
-# vi:filetype=perl
-
 use lib 'lib';
 use Test::Nginx::Socket;
 
-repeat_each(1);
-
-plan tests => 5;
-#use Test::More qw(no_plan);
-
+# Nginx configuration fixture
 our $config = <<'_EOC_';
-    location = /echo {
-        echo hello;
+    location = /hello {
+        hello;
     }
 _EOC_
 
-no_shuffle();
+# test configuration
+
+#plan tests => 5;
+use Test::More qw(no_plan);
+
+repeat_each();
+#no_shuffle();
 run_tests();
 
 __DATA__
@@ -23,7 +23,7 @@ __DATA__
 === TEST 1: hit
 --- config eval: $::config
 --- request
-GET /echo
+GET /hello
 
 
 === TEST 2: not found
@@ -36,8 +36,8 @@ GET /some
 === TEST 3: response
 --- config eval: $::config
 --- request
-GET /echo
+GET /hello
 --- response_headers
 Content-type: text/plain
---- response_body
-hello
+--- response_body eval
+"hello"

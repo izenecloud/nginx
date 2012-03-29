@@ -4,11 +4,7 @@ use lib 'lib';
 use Test::Nginx::Socket;
 
 repeat_each(1);
-
-#plan tests => 5;
-use Test::More qw(no_plan);
-
-no_shuffle();
+plan tests => 3 * blocks(); # three checks for each block
 run_tests();
 
 __DATA__
@@ -59,3 +55,18 @@ content-type: text/plain
 哦"
 
 
+=== TEST 4: hello_arr
+--- config
+location = /hello {
+    hello;
+    hello_arr my;
+    hello_arr "dear friend";
+}
+--- request
+GET /hello
+--- response_headers
+content-type: text/plain
+--- response_body eval
+"hello
+my
+dear friend"
