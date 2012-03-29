@@ -6,11 +6,11 @@
  */
 
 extern "C" {
-#include "ngx_sf1r_ddebug.h"
 #include "ngx_sf1r_handler.h"
 #include "ngx_sf1r_module.h"
 #include "ngx_sf1r_utils.h"
 }
+#include "ngx_sf1r_ddebug.h"
 #include <3rdparty/zookeeper/ZooKeeper.hpp>
 #include <net/sf1r/Sf1DriverBase.hpp>
 #include <string>
@@ -69,7 +69,7 @@ ngx_sf1r_handler(ngx_http_request_t* r) {
     
     ctx->uri.data = r->uri.data;
     ctx->uri.len = r->uri.len;
-    ddebug("   uri: [%s]", ctx->uri.data);
+    ddebug("   uri: [%s]", dsubstr(ctx->uri));
     
     // get tokens
     

@@ -23,11 +23,14 @@ location /sf1r/ {
     sf1r_poolMaxSize 5;
 }
 --- request eval
-["GET /sf1r/test/echo\r\n{\"message\":\"get request\"}",
-"POST /sf1r/test/echo\r\n{\"message\":\"post request\"}"]
+[qq(GET /sf1r/test/echo\r\n{"message":"get request"})
+,qq(POST /sf1r/test/echo\r\n{"message":"post request"})
+]
 --- response_headers eval
-["content-type: application/json",
-"content-type: application/json"]
+["content-type: application/json"
+,"content-type: application/json"
+]
 --- response_body eval
-["{\"header\":{\"success\":true},\"message\":\"get request\"}",
-"{\"header\":{\"success\":true},\"message\":\"post request\"}"]
+[qq({"header":{"success":true},"message":"get request"})
+,qq({"header":{"success":true},"message":"post request"})
+]
