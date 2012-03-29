@@ -6,6 +6,9 @@ set(CMAKE_VERBOSE_MAKEFILE true)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} $ENV{EXTRA_CMAKE_MODULES_DIRS})
 
 
+set(JOBS 2 CACHE STRING "Set the make -j argument")
+message(STATUS "number of jobs: " ${JOBS})
+
 # dependencies
 find_package(Perl)
 if (NOT PERL_FOUND)
@@ -143,7 +146,7 @@ add_custom_command(
 
 # make target
 add_custom_target(nginx ALL
-    COMMAND make
+    COMMAND make -j ${JOBS}
     DEPENDS ${BUILD_DIR}/Makefile
     WORKING_DIRECTORY ${nginx_SOURCE_DIR}/${NGINX_SRC}
     COMMENT "build nginx"
