@@ -6,11 +6,11 @@
  */
 
 extern "C" {
-#include "ngx_sf1r_ddebug.h"
 #include "ngx_sf1r_handler.h"
 #include "ngx_sf1r_module.h"
 #include "ngx_sf1r_utils.h"
 }
+#include "ngx_sf1r_ddebug.h"
 #include <glog/logging.h>
 #include <net/sf1r/Sf1DriverBase.hpp>
 #include <net/sf1r/Sf1Driver.hpp>
@@ -23,6 +23,9 @@ using std::string;
 
 /// Activates the ngx_sf1r module.
 static char* ngx_sf1r(ngx_conf_t*, ngx_command_t*, void*);
+
+/// Sets the URI patterns for broadcasted requests.
+static char* ngx_sf1r_broadcast(ngx_conf_t*, ngx_command_t*, void*);
 
 /// Handler for Sf1Driver initialization.
 static ngx_int_t ngx_sf1r_init(ngx_sf1r_loc_conf_t*);
@@ -88,6 +91,14 @@ static ngx_command_t ngx_sf1r_commands[] = {
         ngx_conf_set_num_slot,
         NGX_HTTP_LOC_CONF_OFFSET,
         offsetof(ngx_sf1r_loc_conf_t, zkTimeout),
+        NULL
+    },
+    {
+        ngx_string("sf1r_broadcast"),
+        NGX_HTTP_LOC_CONF | NGX_CONF_TAKE1,
+        ngx_sf1r_broadcast,
+        NGX_HTTP_LOC_CONF_OFFSET,
+        offsetof(ngx_sf1r_loc_conf_t, broadcasted),
         NULL
     },
     ngx_null_command
@@ -177,6 +188,10 @@ ngx_sf1r_merge_loc_conf(ngx_conf_t* cf, void* parent, void* child) {
     ngx_conf_merge_uint_value(conf->poolMaxSize, prev->poolMaxSize, SF1_DEFAULT_POOL_MAXSIZE);
     ngx_conf_merge_uint_value(conf->zkTimeout, prev->zkTimeout, SF1_DEFAULT_ZK_TIMEOUT);
     
+    if (conf->broadcasted == NULL) {
+        conf->broadcasted = prev->broadcasted;
+    }
+    
     // initialize
     
     if (conf->enabled && conf->driver == NULL) {
@@ -223,6 +238,35 @@ ngx_sf1r_addr_set(ngx_conf_t* cf, ngx_command_t* cmd, void* conf) {
 }
 
 
+static char* 
+ngx_sf1r_broadcast(ngx_conf_t* cf, ngx_command_t* cmd, void* conf) {
+    ngx_sf1r_loc_conf_t* lcf = scast(ngx_sf1r_loc_conf_t*, conf);
+    
+    // create array
+    if (lcf->broadcasted == NULL) {
+        lcf->broadcasted = ngx_array_create(cf->pool, SF1_BCASTED_INIT_SIZE, sizeof(ngx_str_t));
+        if (lcf->broadcasted == NULL) {
+            ngx_log_error(NGX_LOG_ERR, cf->log, 0, "failed to allocate memory");
+            return (char*) NGX_CONF_ERROR;
+        }
+    }
+    
+    // allocate space for new element
+    ngx_str_t* el = scast(ngx_str_t*, ngx_array_push(lcf->broadcasted));
+    if (el == NULL) {
+        ngx_log_error(NGX_LOG_ERR, cf->log, 0, "failed to allocate memory");
+        return (char*) NGX_CONF_ERROR;
+    }
+    
+    // set element value
+    ngx_str_t* value = scast(ngx_str_t*, cf->args->elts);
+    el->len = value[1].len;
+    el->data = value[1].data;
+    
+    return NGX_CONF_OK;
+}
+
+
 /**
  * Disabled explicit initialization of Glog to workaround the following bugs:
  * - http://code.google.com/p/google-glog/issues/detail?id=83
@@ -249,6 +293,13 @@ ngx_sf1r_init(ngx_sf1r_loc_conf_t* conf) {
             sf1conf.resize = conf->poolResize;
             sf1conf.maxSize = conf->poolMaxSize;
             sf1conf.timeout = conf->zkTimeout;
+            if (conf->broadcasted != NULL) {
+                ngx_str_t* values = scast(ngx_str_t*, conf->broadcasted->elts);
+                for (ngx_uint_t i = 0; i < conf->broadcasted->nelts; ++i) {
+                    string value(rcast(const char*, values[i].data));
+                    sf1conf.addBroadCast(value);
+                }
+            }
         
             conf->driver = new Sf1DistributedDriver(host, sf1conf);
         } else {

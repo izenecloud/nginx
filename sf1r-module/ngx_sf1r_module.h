@@ -25,6 +25,7 @@ typedef struct {
     ngx_flag_t poolResize;
     ngx_uint_t poolMaxSize;
     ngx_uint_t zkTimeout;
+    ngx_array_t* broadcasted; // array of ngx_str_t
     void* driver;
     ngx_flag_t distributed;
 } ngx_sf1r_loc_conf_t;

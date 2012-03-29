@@ -14,6 +14,7 @@
 #ifdef SDEBUG
 
 #include <assert.h>
+#include <string>
 
 #   define ck(EXPR) assert(EXPR)
 
@@ -31,7 +32,9 @@
 static void ddebug(const char * fmt, ...) {
 }
 
-#    endif
+#   endif
+
+#   define dsubstr(str) std::string((char*)(str).data, (str).len).c_str()
 
 #else
 
@@ -51,6 +54,9 @@ static void ddebug_enter() {
 }
 
 #   endif
+
+#   define dsubstr(str)
+
 #endif
 
 #endif /* DDEBUG_H */
