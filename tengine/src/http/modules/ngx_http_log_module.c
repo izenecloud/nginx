@@ -1,6 +1,7 @@
 
 /*
  * Copyright (C) Igor Sysoev
+ * Copyright (C) Nginx, Inc.
  */
 
 
@@ -627,13 +628,22 @@ static u_char *
 ngx_http_log_request_time(ngx_http_request_t *r, u_char *buf,
     ngx_http_log_op_t *op)
 {
-    ngx_time_t      *tp;
-    ngx_msec_int_t   ms;
+    ngx_time_t                *tp;
+    ngx_msec_int_t             ms;
+    struct timeval             tv;
+    ngx_http_core_loc_conf_t  *clcf;
 
-    tp = ngx_timeofday();
+    clcf = ngx_http_get_module_loc_conf(r, ngx_http_core_module);
+    if (clcf->request_time_cache) {
+        tp = ngx_timeofday();
+        ms = (ngx_msec_int_t)
+                 ((tp->sec - r->start_sec) * 1000 + (tp->msec - r->start_msec));
+    } else {
+        ngx_gettimeofday(&tv);
+        ms = (tv.tv_sec - r->start_sec) * 1000
+                 + (tv.tv_usec / 1000 - r->start_msec);
+    }
 
-    ms = (ngx_msec_int_t)
-             ((tp->sec - r->start_sec) * 1000 + (tp->msec - r->start_msec));
     ms = ngx_max(ms, 0);
 
     return ngx_sprintf(buf, "%T.%03M", ms / 1000, ms % 1000);
@@ -644,13 +654,22 @@ static u_char *
 ngx_http_log_request_time_msec(ngx_http_request_t *r, u_char *buf,
     ngx_http_log_op_t *op)
 {
-    ngx_time_t      *tp;
-    ngx_msec_int_t   ms;
+    ngx_time_t                *tp;
+    ngx_msec_int_t             ms;
+    struct timeval             tv;
+    ngx_http_core_loc_conf_t  *clcf;
 
-    tp = ngx_timeofday();
+    clcf = ngx_http_get_module_loc_conf(r, ngx_http_core_module);
+    if (clcf->request_time_cache) {
+        tp = ngx_timeofday();
+        ms = (ngx_msec_int_t)
+                 ((tp->sec - r->start_sec) * 1000 + (tp->msec - r->start_msec));
+    } else {
+        ngx_gettimeofday(&tv);
+        ms = (tv.tv_sec - r->start_sec) * 1000
+                 + (tv.tv_usec / 1000 - r->start_msec);
+    }
 
-    ms = (ngx_msec_int_t)
-             ((tp->sec - r->start_sec) * 1000 + (tp->msec - r->start_msec));
     ms = ngx_max(ms, 0);
 
     return ngx_sprintf(buf, "%T", ms);
@@ -661,13 +680,25 @@ static u_char *
 ngx_http_log_request_time_usec(ngx_http_request_t *r, u_char *buf,
     ngx_http_log_op_t *op)
 {
-    ngx_time_t      *tp;
-    ngx_usec_int_t   us;
+    ngx_time_t                *tp;
+    ngx_usec_int_t             us;
+    struct timeval             tv;
+    ngx_http_core_loc_conf_t  *clcf;
 
-    tp = ngx_timeofday();
+    clcf = ngx_http_get_module_loc_conf(r, ngx_http_core_module);
+    if (clcf->request_time_cache) {
+        tp = ngx_timeofday();
 
-    us = (ngx_usec_int_t) (1000 *
-             ((tp->sec - r->start_sec) * 1000 + (tp->msec - r->start_msec)));
+        us = (ngx_usec_int_t) (1000 *
+                 ((tp->sec - r->start_sec) * 1000 + (tp->msec - r->start_msec)))
+                 + tp->usec - r->start_usec;
+    } else {
+        ngx_gettimeofday(&tv);
+        us = (ngx_usec_int_t) (1000 * ((tv.tv_sec - r->start_sec) * 1000
+                 + (tv.tv_usec / 1000 - r->start_msec)))
+                 + tv.tv_usec % 1000 - r->start_usec;
+    }
+
     us = ngx_max(us, 0);
 
     return ngx_sprintf(buf, "%T", us);

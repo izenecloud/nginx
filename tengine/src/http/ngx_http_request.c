@@ -1,6 +1,7 @@
 
 /*
  * Copyright (C) Igor Sysoev
+ * Copyright (C) Nginx, Inc.
  */
 
 
@@ -238,6 +239,7 @@ ngx_http_init_request(ngx_event_t *rev)
 {
     ngx_time_t                 *tp;
     ngx_uint_t                  i;
+    struct timeval              tv;
     ngx_connection_t           *c;
     ngx_http_request_t         *r;
     struct sockaddr_in         *sin;
@@ -488,9 +490,17 @@ ngx_http_init_request(ngx_event_t *rev)
     r->main = r;
     r->count = 1;
 
-    tp = ngx_timeofday();
-    r->start_sec = tp->sec;
-    r->start_msec = tp->msec;
+    if (clcf->request_time_cache) {
+        tp = ngx_timeofday();
+        r->start_sec = tp->sec;
+        r->start_msec = tp->msec;
+        r->start_usec = tp->usec;
+    } else {
+        ngx_gettimeofday(&tv);
+        r->start_sec = tv.tv_sec;
+        r->start_msec = tv.tv_usec / 1000;
+        r->start_usec = tv.tv_usec % 1000;
+    }
 
     r->method = NGX_HTTP_UNKNOWN;
 
@@ -1486,17 +1496,12 @@ ngx_http_process_user_agent(ngx_http_request_t *r, ngx_table_elt_t *h,
 
     if (!r->headers_in.msie && !r->headers_in.opera) {
 
-        if (ngx_strstrn(user_agent, "Gecko/", 6 - 1)) {
-            r->headers_in.gecko = 1;
-
-        } else if (ngx_strstrn(user_agent, "Chrome/", 7 - 1)) {
+        if (ngx_strstrn(user_agent, "Chrome/", 7 - 1)) {
             r->headers_in.chrome = 1;
 
         } else if (ngx_strstrn(user_agent, "Safari/", 7 - 1)) {
             r->headers_in.safari = 1;
 
-        } else if (ngx_strstrn(user_agent, "Konqueror", 9 - 1)) {
-            r->headers_in.konqueror = 1;
         }
     }
 
