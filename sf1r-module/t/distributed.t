@@ -34,8 +34,8 @@ location /sf1r/ {
 }
 --- request eval
 [qq(POST /sf1r/test/echo\r\n{"message":"Ciao! 你好！"})
-,qq(POST /sf1r/documents/search\r\n{"collection":"example","header":{"check_time":true},"search":{"keywords":"手机"},"limit":10})
-,qq(POST /sf1r/documents/search\r\n{"collection":"example","header":{"check_time":true},"search":{"keywords":"手机"},"limit":10})
+,qq(POST /sf1r/documents/search\r\n{"collection":"b5mm","header":{"check_time":true},"search":{"keywords":"手机"},"limit":10})
+,qq(POST /sf1r/documents/search\r\n{"collection":"b5mm","header":{"check_time":true},"search":{"keywords":"手机"},"limit":10})
 ]
 --- response_body_like eval
 [qq("header":{"success":true})
@@ -49,12 +49,12 @@ location /sf1r/ {
 location /sf1r/ {
     rewrite ^/sf1r/(.*)$ $1 break;
     sf1r;
-    sf1r_addr 180.153.140.110:2181,180.153.140.111:2181,180.153.140.112:2181 distributed;
+    sf1r_addr localhost:2181 distributed;
     sf1r_zkTimeout 2000;
     sf1r_broadcast ^test/\w+$;
 }
 --- request eval
 [qq(POST /sf1r/test/echo\r\n{"message":"Ciao! 你好！"})
 ,qq(POST /sf1r/documents/search\r\n{"collection":"b5mm","header":{"check_time":true},"search":{"keywords":"手机"},"limit":10})
-,qq(POST /sf1r/documents/search\r\n{"collection":"b5ma","header":{"check_time":true},"search":{"keywords":"手机"},"limit":10})
+,qq(POST /sf1r/documents/search\r\n{"collection":"b5mm","header":{"check_time":true},"search":{"keywords":"手机"},"limit":10})
 ]
