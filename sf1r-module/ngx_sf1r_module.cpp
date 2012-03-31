@@ -180,7 +180,7 @@ ngx_sf1r_merge_loc_conf(ngx_conf_t* cf, void* parent, void* child) {
     ngx_conf_merge_str_value(conf->address, prev->address, SF1_DEFAULT_ADDR);
     
     ngx_conf_merge_value(conf->enabled, prev->enabled, FLAG_DISABLED);
-    ngx_conf_merge_value(conf->distributed, prev->enabled, FLAG_DISABLED);
+    ngx_conf_merge_value(conf->distributed, prev->distributed, FLAG_DISABLED);
     ngx_conf_merge_ptr_value(conf->driver, prev->driver, NULL);
     
     ngx_conf_merge_uint_value(conf->poolSize, prev->poolSize, SF1_DEFAULT_POOL_SIZE);
@@ -312,7 +312,7 @@ ngx_sf1r_init(ngx_sf1r_loc_conf_t* conf) {
         
             conf->driver = new Sf1Driver(host, sf1conf);
         }
-    } catch (ServerError& e) {
+    } catch (NetworkError& e) {
         ddebug("%s", e.what());
         return NGX_ERROR;
     }
