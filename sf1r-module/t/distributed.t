@@ -21,7 +21,7 @@ location /sf1r/ {
 --- request
 GET /sf1r/test/echo
 {"message":"Ciao! 你好！"}
---- error_code: 502
+--- error_code: 504
 
 
 === TEST 2: route requests

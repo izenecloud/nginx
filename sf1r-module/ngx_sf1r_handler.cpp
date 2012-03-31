@@ -17,6 +17,7 @@ extern "C" {
 
 using izenelib::zookeeper::ZooKeeperException;
 using NS_IZENELIB_SF1R::ClientError;
+using NS_IZENELIB_SF1R::NetworkError;
 using NS_IZENELIB_SF1R::RoutingError;
 using NS_IZENELIB_SF1R::ServerError;
 using NS_IZENELIB_SF1R::Sf1DriverBase;
@@ -198,9 +199,12 @@ ngx_sf1r_request_body_handler(ngx_http_request_t* r) {
         rc = NGX_HTTP_SERVICE_UNAVAILABLE;
     } catch (ZooKeeperException& e) {
         ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "ZooKeeperException: %s", e.what());
-        rc = NGX_HTTP_BAD_GATEWAY;
+        rc = NGX_HTTP_GATEWAY_TIME_OUT;
+    } catch (NetworkError& e) {
+        ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "NetworkError: %s", e.what());
+        rc = NGX_HTTP_GATEWAY_TIME_OUT;
     } catch (std::exception& e) {
-        ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "exception: ", e.what());
+        ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "Exception: %s", e.what());
         rc = NGX_HTTP_INTERNAL_SERVER_ERROR;
     }
     
