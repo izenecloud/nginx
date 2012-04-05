@@ -34,8 +34,7 @@ GET /hello
 --- response_headers
 content-type: text/plain
 --- response_body eval 
-"hello
-hello"
+qq(hello\nhello)
 
 
 === TEST 3: hello_str
@@ -50,9 +49,7 @@ GET /hello
 --- response_headers
 content-type: text/plain
 --- response_body eval 
-"哦
-哦
-哦"
+qq(哦\n哦\n哦)
 
 
 === TEST 4: hello_arr
@@ -67,6 +64,4 @@ GET /hello
 --- response_headers
 content-type: text/plain
 --- response_body eval
-"hello
-my
-dear friend"
+qq(hello\nmy\ndear friend)

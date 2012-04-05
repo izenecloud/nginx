@@ -95,7 +95,7 @@ set(SF1R_MODULE sf1r-module)
 list(APPEND MODULE_DIRS
     ${ECHO_MODULE}
     ${HEADERS_MORE_MODULE}
-#    ${HELLO_MODULE}
+    ${HELLO_MODULE}
     ${SF1R_MODULE}
 )
 
@@ -157,7 +157,7 @@ set_directory_properties(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES ${BUILD_DIR})
 # tests
 enable_testing()
 
-set(MODULE_TEST ${SF1R_MODULE})
+set(MODULE_TEST ${HELLO_MODULE} ${SF1R_MODULE})
 
 if (MODULE_TEST)
     add_custom_target(test)
