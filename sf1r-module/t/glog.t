@@ -6,11 +6,11 @@ use Test::Nginx::Socket;
 our $config = <<'_EOC_';
     location /a/ {
         rewrite ^/a(/.*)$ $1 break;
-        sf1r;
+        sf1r_addr localhost:18181;
     }
     location /b/ {
         rewrite ^/b(/.*)$ $1 break;
-        sf1r;
+        sf1r_addr 172.16.0.162:18181;
     }
 _EOC_
 

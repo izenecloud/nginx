@@ -10,7 +10,7 @@ _EOC_
 our $config = <<'_EOC_';
     location /sf1r/ {
         rewrite ^/sf1r(/.*)$ $1 break;
-        sf1r;
+        sf1r_addr localhost:18181;
         sf1r_poolSize 1;
         sf1r_poolResize off;
         sf1r_poolMaxSize 5;

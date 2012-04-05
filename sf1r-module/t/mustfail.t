@@ -13,15 +13,17 @@ __DATA__
 --- config
 location /sf1r/ {
     rewrite ^/sf1r/(.*)$ $1 break;
-    sf1r;
     sf1r_addr "somewhere:1234";
 }
+--- request
+GET /sf1r
 
 
 === TEST 2: cannot start (distributed)
 --- config
 location /sf1r/ {
     rewrite ^/sf1r/(.*)$ $1 break;
-    sf1r;
     sf1r_addr "somewhere:1234" distributed;
 }
+--- request
+GET /sf1r

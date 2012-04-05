@@ -15,7 +15,6 @@ __DATA__
 === TEST 1: connection error
 --- config
 location /sf1r/ {
-    sf1r;
     sf1r_addr somehost:2181 distributed;
 }
 --- request
@@ -28,7 +27,6 @@ GET /sf1r/test/echo
 --- config
 location /sf1r/ {
     rewrite ^/sf1r/(.*)$ $1 break;
-    sf1r;
     sf1r_addr localhost:2181 distributed;
     sf1r_zkTimeout 2000;
 }
@@ -48,7 +46,6 @@ location /sf1r/ {
 --- config
 location /sf1r/ {
     rewrite ^/sf1r/(.*)$ $1 break;
-    sf1r;
     sf1r_addr localhost:2181 distributed;
     sf1r_zkTimeout 2000;
     sf1r_broadcast ^test/\w+$;

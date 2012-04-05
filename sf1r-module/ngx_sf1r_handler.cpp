@@ -146,9 +146,9 @@ ngx_sf1r_request_body_handler(ngx_http_request_t* r) {
     
     ngx_buf_t* buf = cl->buf;
     size_t len = buf->last - buf->pos;
-    ddebug("first buffer: %zu of %zu", len, ctx->body_len);
+    ddebug("first buffer: %zu/%zu", len, ctx->body_len);
     body.assign(rcast(char*, buf->pos), len);
-    ddebug("first buffer:\n[%s]\n", body.c_str());
+    ddebug("first buffer content:\n%s\n", body.c_str());
     
     if (cl->next != NULL) {
         ddebug("reading from the second buffer ...");
@@ -157,20 +157,20 @@ ngx_sf1r_request_body_handler(ngx_http_request_t* r) {
             len = ctx->body_len - len;
             u_char buffer[len];
             ngx_read_file(&r->request_body->temp_file->file, buffer, len, 0);
-            ddebug("file buffer: %zu of %zu", len, ctx->body_len);
+            ddebug("file buffer: %zu/%zu", len, ctx->body_len);
             body.append(rcast(char*, buffer), len);
-            ddebug("file buffer:\n[%s]\n", buffer);
+            ddebug("file buffer content:\n%s\n", buffer);
         } else {
             ngx_buf_t* next = cl->next->buf;
             len = next->last - next->pos;
-            ddebug("memory buffer: %zu of %zu", len, ctx->body_len);
+            ddebug("memory buffer: %zu/%zu", len, ctx->body_len);
             
             body.append(rcast(char*, next->pos), len);
-            ddebug("memory buffer:\n[%s]\n", string(rcast(char*, next->pos), len).c_str());
+            ddebug("memory buffer contet:\n%s\n", string(rcast(char*, next->pos), len).c_str());
         }
     }
 
-    ddebug("body:\n[%s]\n", body.c_str());
+    ddebug("full request body:\n%s\n", body.c_str());
     
     ngx_sf1r_loc_conf_t* conf = scast(ngx_sf1r_loc_conf_t*, ngx_http_get_module_loc_conf(r, ngx_sf1r_module));
     
@@ -183,7 +183,7 @@ ngx_sf1r_request_body_handler(ngx_http_request_t* r) {
         string tokens(rcast(char*, ctx->tokens.data), ctx->tokens.len);
         
         string response = driver->call(uri, tokens, body);
-        ddebug("response:\n[%s]", response.c_str());
+        ddebug("response body:\n%s\n", response.c_str());
         
         /* send response */
         rc = ngx_sf1r_send_response(r, NGX_HTTP_OK, response);
@@ -228,7 +228,7 @@ ngx_sf1r_send_response(ngx_http_request_t* r, ngx_uint_t status, string& body) {
     r->headers_out.content_type.len = sizeof(APPLICATION_JSON) - 1;
     r->headers_out.content_type.data = (u_char*) APPLICATION_JSON;
     
-    ddebug("set response header: %zu - %s", r->headers_out.status = status, r->headers_out.content_type.data);
+    ddebug("set response header: [%zu - %s]", r->headers_out.status = status, r->headers_out.content_type.data);
     
     /* set response body */
     

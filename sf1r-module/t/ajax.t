@@ -7,7 +7,7 @@ our $config = <<'_EOC_';
 underscores_in_headers on;
 location /sf1r/ {
     rewrite ^/sf1r(/.*)$ $1 break;
-    sf1r;
+    sf1r_addr localhost:18181;
     more_set_headers 'Access-Control-Allow-Origin: *';
     more_set_headers 'Access-Control-Allow-Methods: POST, GET, PUT, DELETE, OPTIONS';
     more_set_headers 'Access-Control-Allow-Headers: CONTENT-TYPE';

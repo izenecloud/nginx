@@ -17,10 +17,9 @@ __DATA__
 --- config
 location /sf1r/ {
     rewrite ^/sf1r(/.*)$ $1 break;
-    sf1r;
+    sf1r_addr localhost:18181;
     sf1r_poolSize 1;
     sf1r_poolResize off;
-    sf1r_poolMaxSize 5;
 }
 --- request eval
 [qq(GET /sf1r/test/echo\r\n{"message":"get request"})

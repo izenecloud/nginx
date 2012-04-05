@@ -6,7 +6,7 @@ use Test::Nginx::Socket;
 our $config = <<'_EOC_';
     location /sf1r/ {
         rewrite ^/sf1r(/.*)$ $1 break;
-        sf1r;
+        sf1r_addr localhost:18181;
     }
 _EOC_
 
