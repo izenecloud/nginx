@@ -41,6 +41,9 @@ static char* ngx_sf1r_merge_loc_conf(ngx_conf_t*, void*, void*);
 /// Handler for the 'sf1_addr' directive.
 static char* ngx_sf1r_addr_set(ngx_conf_t*, ngx_command_t*, void*);
 
+/// Callback to be executed on module init.
+static ngx_int_t ngx_sf1r_init_module(ngx_cycle_t*);
+
 /// Callback to be executed on worker process init.
 static ngx_int_t ngx_sf1r_init_process(ngx_cycle_t*);
 
@@ -122,7 +125,7 @@ ngx_module_t ngx_sf1r_module = {
     ngx_sf1r_commands,
     NGX_HTTP_MODULE,
     NULL,
-    NULL,
+    ngx_sf1r_init_module,
     ngx_sf1r_init_process,
     NULL,
     NULL,
@@ -291,6 +294,20 @@ ngx_sf1r_broadcast(ngx_conf_t* cf, ngx_command_t* cmd, void* conf) {
  */
 #undef INIT_GLOG
 
+/*
+ * TODO: add directive to set the log output (stderr or file) 
+ */
+
+static ngx_int_t 
+ngx_sf1r_init_module(ngx_cycle_t* cycle) {
+#ifdef INIT_GLOG
+    ngx_log_error(NGX_LOG_NOTICE, cycle->log, 0, "init logging system ...");
+    google::InitGoogleLogging("ngx_sf1r");
+    google::LogToStderr();
+#endif
+    return NGX_OK;
+}
+
 
 static ngx_int_t 
 ngx_sf1r_init_process(ngx_cycle_t* cycle) {
@@ -333,10 +350,6 @@ ngx_sf1r_exit_process(ngx_cycle_t* cycle) {
 static ngx_int_t
 ngx_sf1r_init(ngx_sf1r_loc_conf_t* conf, ngx_log_t* log) {
     try {
-#ifdef INIT_GLOG
-        ddebug("init logging system ...");
-        google::InitGoogleLogging("ngx_sf1r");
-#endif
         ngx_log_error(NGX_LOG_NOTICE, log, 0, "instantiating driver ...");
         
         string host((char*) conf->address.data, conf->address.len);
@@ -385,9 +398,5 @@ ngx_sf1r_cleanup(ngx_sf1r_loc_conf_t* conf, ngx_log_t* log) {
         } catch (std::exception& e) {
             ngx_log_error(NGX_LOG_ERR, log, 0, "%s", e.what());
         }
-#ifdef INIT_GLOG
-        ddebug("shutting down logging system ...");
-        google::ShutdownGoogleLogging();
-#endif
     }
 }
