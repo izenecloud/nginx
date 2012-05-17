@@ -33,7 +33,7 @@ static void ngx_sf1r_request_body_handler(ngx_http_request_t*);
 static ngx_flag_t ngx_sf1r_check_request_body(ngx_http_request_t*);
 
 /// Sends the response.
-static ngx_int_t ngx_sf1r_send_response(ngx_http_request_t*, ngx_uint_t, string&);
+static ngx_int_t ngx_sf1r_send_response(ngx_http_request_t*, ngx_uint_t, ngx_sf1r_ctx_t*);
 
 
 ngx_int_t
@@ -184,8 +184,13 @@ ngx_sf1r_request_body_handler(ngx_http_request_t* r) {
         string response = driver->call(uri, tokens, body);
         ddebug("response body:\n%s\n", response.c_str());
         
+        // cannot use use the char* inside string, because it will raise a Bad Address (14) error.
+        ctx->response_len = response.length();
+        ctx->response_body = scast(char*, ngx_pcalloc(r->pool, response.length()));
+        strcpy(ctx->response_body, response.c_str());
+        
         /* send response */
-        rc = ngx_sf1r_send_response(r, NGX_HTTP_OK, response);
+        rc = ngx_sf1r_send_response(r, NGX_HTTP_OK, ctx);
         
     } catch (ClientError& e) {
         ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "ClientError: %s", e.what());
@@ -209,49 +214,49 @@ ngx_sf1r_request_body_handler(ngx_http_request_t* r) {
     
 
 static ngx_int_t 
-ngx_sf1r_send_response(ngx_http_request_t* r, ngx_uint_t status, string& body) {
+ngx_sf1r_send_response(ngx_http_request_t* r, ngx_uint_t status, ngx_sf1r_ctx_t* ctx) {
     ddebug("sending response ...");
     
-    /* set response header */
+    /* response header */
     
     // set the status line
     r->headers_out.status = status;
-    
-    r->headers_out.content_length_n = body.length();
-    
+    r->headers_out.content_length_n = ctx->response_len;
     // TODO: set content type according to Sf1Config (parameter: JSON/XML)
     r->headers_out.content_type_len = sizeof(APPLICATION_JSON) - 1;
     r->headers_out.content_type.len = sizeof(APPLICATION_JSON) - 1;
     r->headers_out.content_type.data = (u_char*) APPLICATION_JSON;
     
-    ddebug("set response header: [%zu - %s]", r->headers_out.status = status, r->headers_out.content_type.data);
+    // send the header
+    ngx_int_t rc = ngx_http_send_header(r);
+    if (rc == NGX_ERROR || rc > NGX_OK || r->header_only) {
+        return rc;
+    }
+    ddebug("sent response header: [%zu - %s]", r->headers_out.status = status, r->headers_out.content_type.data);
     
-    /* set response body */
+    /* response body */
     
     // allocate a buffer
-    ngx_buf_t* buffer = scast(ngx_buf_t*, ngx_pcalloc(r->pool, sizeof(ngx_buf_t)));
+    ngx_buf_t* buffer = scast(ngx_buf_t*, ngx_calloc_buf(r->pool));
     if (buffer == NULL) {
-        ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "Failed to allocate response buffer.");
+        ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "Failed to allocate response body buffer.");
         return NGX_HTTP_INTERNAL_SERVER_ERROR;
     }
     
     // adjust the pointers of the buffer
-    buffer->pos = (u_char*) body.c_str();
-    buffer->last = (u_char*) (body.c_str() + body.length());
+    buffer->start = buffer->pos = (u_char*) ctx->response_body;
+    buffer->end = buffer->last = (u_char*) (ctx->response_body + ctx->response_len);
+    
+    // buffer flags
     buffer->memory = 1;
     buffer->last_buf = 1;
+    buffer->last_in_chain = 1;
 
     // attach this buffer to the buffer chain
     ngx_chain_t out;
     out.buf = buffer;
     out.next = NULL;
     ddebug("response buffer set");
-    
-    /* send the header */
-    ngx_int_t rc = ngx_http_send_header(r);
-    if (rc == NGX_ERROR || rc > NGX_OK || r->header_only) {
-        return rc;
-    }
     
     return ngx_http_output_filter(r, &out);
 }

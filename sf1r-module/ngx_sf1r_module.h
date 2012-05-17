@@ -40,6 +40,8 @@ typedef struct {
     ngx_str_t uri;
     ngx_str_t tokens;
     ngx_uint_t body_len;
+    ngx_uint_t response_len;
+    char* response_body;
 } ngx_sf1r_ctx_t;
 
 #endif	/* NGX_SF1R_MODULE_H */
