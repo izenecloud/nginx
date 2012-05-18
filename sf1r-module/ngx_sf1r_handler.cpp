@@ -187,7 +187,7 @@ ngx_sf1r_request_body_handler(ngx_http_request_t* r) {
         // cannot use use the char* inside string, because it will raise a Bad Address (14) error.
         ctx->response_len = response.length();
         ctx->response_body = scast(char*, ngx_pcalloc(r->pool, response.length()));
-        strcpy(ctx->response_body, response.c_str());
+        response.copy(ctx->response_body, response.length());
         
         /* send response */
         rc = ngx_sf1r_send_response(r, NGX_HTTP_OK, ctx);
