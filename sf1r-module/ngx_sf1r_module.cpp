@@ -86,6 +86,14 @@ static ngx_command_t ngx_sf1r_commands[] = {
         NULL
     },
     {
+        ngx_string("sf1r_timeout"),
+        NGX_HTTP_LOC_CONF | NGX_CONF_TAKE1,
+        ngx_conf_set_num_slot,
+        NGX_HTTP_LOC_CONF_OFFSET,
+        offsetof(ngx_sf1r_loc_conf_t, timeout),
+        NULL
+    },
+    {
         ngx_string("sf1r_zkTimeout"),
         NGX_HTTP_LOC_CONF | NGX_CONF_TAKE1,
         ngx_conf_set_num_slot,
@@ -171,6 +179,7 @@ ngx_sf1r_create_loc_conf(ngx_conf_t* cf) {
     conf->poolSize = NGX_CONF_UNSET_UINT;
     conf->poolResize = NGX_CONF_UNSET;
     conf->poolMaxSize = NGX_CONF_UNSET_UINT;
+    conf->timeout = NGX_CONF_UNSET_UINT;
     conf->zkTimeout = NGX_CONF_UNSET_UINT;
     
     /*
@@ -198,6 +207,7 @@ ngx_sf1r_merge_loc_conf(ngx_conf_t* cf, void* parent, void* child) {
     ngx_conf_merge_uint_value(conf->poolSize, prev->poolSize, SF1_DEFAULT_POOL_SIZE);
     ngx_conf_merge_value(conf->poolResize, prev->poolResize, FLAG_DISABLED);
     ngx_conf_merge_uint_value(conf->poolMaxSize, prev->poolMaxSize, SF1_DEFAULT_POOL_MAXSIZE);
+    ngx_conf_merge_uint_value(conf->timeout, prev->timeout, SF1_DEFAULT_TIMEOUT);
     ngx_conf_merge_uint_value(conf->zkTimeout, prev->zkTimeout, SF1_DEFAULT_ZK_TIMEOUT);
     
     if (conf->broadcasted == NULL) {
@@ -360,7 +370,8 @@ ngx_sf1r_init(ngx_sf1r_loc_conf_t* conf, ngx_log_t* log) {
             sf1conf.initialSize = conf->poolSize;
             sf1conf.resize = conf->poolResize;
             sf1conf.maxSize = conf->poolMaxSize;
-            sf1conf.timeout = conf->zkTimeout;
+            sf1conf.timeout = conf->timeout;
+            sf1conf.zkTimeout = conf->zkTimeout;
             if (conf->broadcasted != NULL) {
                 ngx_str_t* values = scast(ngx_str_t*, conf->broadcasted->elts);
                 for (ngx_uint_t i = 0; i < conf->broadcasted->nelts; ++i) {
@@ -377,6 +388,7 @@ ngx_sf1r_init(ngx_sf1r_loc_conf_t* conf, ngx_log_t* log) {
             sf1conf.initialSize = conf->poolSize;
             sf1conf.resize = conf->poolResize;
             sf1conf.maxSize = conf->poolMaxSize;
+            sf1conf.timeout = conf->timeout;
         
             conf->driver = new Sf1Driver(host, sf1conf);
         }

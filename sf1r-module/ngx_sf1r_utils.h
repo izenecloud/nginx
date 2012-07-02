@@ -25,6 +25,7 @@
 
 #define SF1_DEFAULT_POOL_SIZE           5
 #define SF1_DEFAULT_POOL_MAXSIZE        25
+#define SF1_DEFAULT_TIMEOUT             60
 #define SF1_DEFAULT_ZK_TIMEOUT          2000
 
 #define SF1_ARRAY_INIT_SIZE             4

@@ -24,6 +24,7 @@ typedef struct {
     ngx_uint_t poolSize;
     ngx_flag_t poolResize;
     ngx_uint_t poolMaxSize;
+    ngx_uint_t timeout;
     ngx_uint_t zkTimeout;
     ngx_array_t* broadcasted; // array of ngx_str_t
     void* driver;
