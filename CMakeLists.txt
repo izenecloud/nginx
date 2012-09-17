@@ -91,12 +91,14 @@ set(ECHO_MODULE agentzh-echo-nginx-module-df58882)
 set(HEADERS_MORE_MODULE agentzh-headers-more-nginx-module-de77fd2)
 set(HELLO_MODULE nginx-hello-module)
 set(SF1R_MODULE sf1r-module)
+set(FLUENTD_MODULE nginx-fluentd-module)
 
 list(APPEND MODULE_DIRS
     ${ECHO_MODULE}
     ${HEADERS_MORE_MODULE}
     ${HELLO_MODULE}
     ${SF1R_MODULE}
+    ${FLUENTD_MODULE}
 )
 
 
