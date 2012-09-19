@@ -351,6 +351,9 @@ ngx_http_fluentd_create_loc_conf(ngx_conf_t *cf)
         return NGX_CONF_ERROR;
     }
 
+    // turn off fluentd module by default
+    conf->off = 1;
+
     return conf;
 }
 
@@ -364,7 +367,7 @@ ngx_http_fluentd_merge_loc_conf(ngx_conf_t *cf, void *parent, void *child)
         conf->tag = prev->tag;
     }
 
-    if(conf->logs || conf->off) {
+    if(conf->logs || conf->off == 0) {
         return NGX_CONF_OK;
     }
 
@@ -417,6 +420,9 @@ ngx_http_fluentd_set_log(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
         ulcf->off = 1;
         return NGX_CONF_OK;
     }
+
+    // turn on fluentd module
+    ulcf->off = 0;
 
     if (ulcf->logs == NULL) {
         ulcf->logs = ngx_array_create(cf->pool, 2, sizeof(ngx_http_fluentd_t));
