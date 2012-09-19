@@ -79,12 +79,12 @@ if(WITH_DEBUG)
     list(APPEND CONFIGURE_ARGS "--with-cc-opt=-DSDEBUG")
 endif()
 
-# nginx configuration options
-option(WITH_REWRITE "enable the http_rewrite module" true)
-if(NOT WITH_REWRITE)
-   list(APPEND CONFIGURE_ARGS "--without-http_rewrite_module")
-endif()
 
+# nginx configuration options
+option(WITH_STATUS "enable the http_stub_status_module" false)
+if(WITH_STATUS)
+   list(APPEND CONFIGURE_ARGS "--with-http_stub_status_module")
+endif()
 
 # extra modules source dirs
 set(ECHO_MODULE agentzh-echo-nginx-module-df58882)
