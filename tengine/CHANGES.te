@@ -1,182 +1,267 @@
 
+Changes with Tengine 1.4.1                                         10 Oct 2012
+
+    *) Feature: added jemalloc library support. (fanjizhao)
+
+    *) Feature: added a new variable '$dollar', whose value is the dollar
+       sign ('$'). (zhuzhaoyuan)
+
+    *) Feature: added the option 'off' to 'worker_cpu_affinity' directive.
+       (cfsego)
+
+    *) Change: disable CPU affinity when a new worker process is forked as
+       an old one exits abnormally. (cfsego)
+
+    *) Bugfix: fixed compile error with shared Lua module when using LuaJIT
+       in Mac OS. (monadbobo)
+
+    *) Bugfix: fixed the wrong module execution order with the third party
+       shared filter module. (monadbobo)
+
+
+Changes with Tengine 1.4.0                                         05 Sep 2012
+
+    *) Feature: added the dynamic module loading support (a.k.a. DSO), so we
+       don't have to recompile tengine when we want to add a new module.
+       (monadbobo)
+
+    *) Feature: updated the Lua module to the latest stable version.
+       (chaoslawful, agentzh, jinglong)
+
+    *) Feature: added json and csv format output for the upstream_check
+       module. (yaoweibin)
+
+    *) Feature: added the 'log_empty_request' directive which could be used
+       to turn off logs from a connection without HTTP data. (zhuzhaoyuan)
+
+    *) Feature: added the 'concat_delimiter' directive to the concat module
+       to allow adding delimiter between each file. (dinic)
+
+    *) Feature: added the 'concat_ignore_file_error' directive to ignore file
+       errors and the syntax of concat is less strict now. (dinic) 
+
+    *) Feature: added the 'default' option to the 'error_page' directive to
+       set all error pages to default values. (jinglong)
+
+    *) Feature: added the 'priority' directive of the procs module.
+       (yzprofile)
+
+    *) Feature: added the 'delay_start' directive of the procs module.
+       (yzprofile)
+
+    *) Change: merged changes from nginx-1.2.3. (zhuzhaoyuan)
+
+    *) Bugfix: fixed a segmentation fault bug of the geo module when 'range'
+       was set without default value. (yzprofile)
+
+    *) Bugfix: fixed a segmentation fault bug with the procs module.
+       (yzprofile)
+
+    *) Bugfix: fixed a socket leak bug when upstream_check was enabled.
+       (yaoweibin)
+
+    *) Bugfix: fixed some bugs of the limit_req module. (monadbobo)
+
+    *) Bugfix: fixed wrong format types with error logs. (yaoweibin)
+
+    *) Bugfix: fixed a compile error if the perl module was used with procs.
+       (yzprofile)
+
+
+Changes with Tengine 1.3.0                                         25 May 2012
+
+    *) Feature: added the Lua module which embeds the power of Lua into Tengine.
+       (chaoslawful, agentzh)
+
+    *) Feature: added the procs module which provides a mechanism to support
+       standalone processes. (yzprofile)
+
+    *) Change: renamed the parameter from 'nongreedy' to 'greedy' in the
+       user_agent module. (dinic)
+
+    *) Bugfix: fixed a segmentation fault bug in syslog with uninitialized
+       pointer problem. (cfsego)
+
+    *) Bugfix: fixed a compile error in syslog with '--with-ipv6' configuration
+       parameter. (cfsego)
+
+
+Changes with Tengine 1.2.5                                         09 May 2012
+
+    *) Feature: added the upstream_check module which could be used to do
+       proactive health check of upstream servers. (yaoweibin)
+
+    *) Feature: now allow to specify program identifiers with syslogs. (cfsego)
+
+    *) Change: merged changes between nginx-1.0.14 and nginx-1.0.15.
+       (zhuzhaoyuan)
+
+    *) Change: the default value of 'accept_mutex_delay' was changed from
+       500ms to 100ms to gain better performance. (zhuzhaoyuan)
+
+    *) Bugfix: fixed a segmentation fault bug in syslog when failed to connect
+       to an upstream server. (cfsego)
+
+    *) Bugfix: fixed the bug of 'access_log' might not be compatible with the
+       'buffer' parameter. (cfsego)
+
+
+Changes with Tengine 1.2.4                                         30 Mar 2012
+
+    *) Feature: added the user_agent module. (dinic)
+
+    *) Feature: added the 'log_escape' directive. (agentzh, skoo87)
+
+    *) Change: merged changes between nginx-1.0.12 and nginx-1.0.14.
+       (zhuzhaoyuan)
+
+    *) Bugfix: fixed a bug in the limit_req module. (liseen.wan)
+
+    *) Bugfix: fixed a bug in subrequest. (lifeibo)
+
+
 Changes with Tengine 1.2.3                                         27 Feb 2012
 
-    *) Feature: adds the 'request_time_cache' directive, so we can get more 
-       precise $request_time/$request_time_msec/$request_time_usec by turning
-       it off.
-       Thanks to Yuanzhuo.
+    *) Feature: added the 'request_time_cache' directive to get more precise
+       $request_time/$request_time_msec/$request_time_usec. (yzprofile)
 
-    *) Feature: adds the 'slice' module to get a slice of a static file.
-       Thanks to Shudu.
+    *) Feature: added the slice module. (zhuzhaoyuan)
 
-    *) Change: merges changes between nginx-1.0.11 and nginx-1.0.12.
-       Thanks to Shudu.
+    *) Change: merged changes between nginx-1.0.11 and nginx-1.0.12.
+       (zhuzhaoyuan)
 
-    *) Change: deletes unused browsers detection.
-       Thanks to Shudu.
+    *) Change: deleted unused browsers detection. (zhuzhaoyuan)
 
-    *) Bugfix: fixes a bug in upstream when reading header.
-       Thanks to Lizi.
+    *) Bugfix: fixed a bug in upstream when reading header. (lifeibo)
 
-    *) Bugfix: fixes a bug in 'expires_by_types'.
-       Thanks to Lizi.
+    *) Bugfix: fixed a bug in 'expires_by_types'. (lifeibo)
+
 
 Changes with Tengine 1.2.2                                         11 Jan 2012
 
-    *) Feature: adds input body filter mechanism.
-       Thanks to Weiyue.
+    *) Feature: added the input body filter mechanism. (cfsego)
 
-    *) Feature: adds SSL dialog support to mail module.
-       Thanks to Weiyue.
+    *) Feature: added SSL dialog support to the mail module. (cfsego)
 
-    *) Change: merges changes between nginx-1.0.10 and nginx-1.0.11.
-       Thanks to Shudu.
+    *) Change: merged changes between nginx-1.0.10 and nginx-1.0.11.
+       (zhuzhaoyuan)
 
-    *) Change: now 'lingering_close' is off by default.
-       Thanks to Shudu.
+    *) Change: turned 'lingering_close' off by default. (zhuzhaoyuan)
 
-    *) Bugfix: fixes the bug with pipe logs.
-       Thanks to Weiyue.
+    *) Bugfix: fixed a bug in pipe logs. (cfsego)
 
-    *) Bugfix: fixes the 'forbid_action' bug of limit_req module.
-       Thanks to Diaoliang.
+    *) Bugfix: fixed a 'forbid_action' bug in the limit_req module.
+       (monadbobo)
 
-    *) Bugfix: fixes the 'backtrace_max_stack_size' bug.
-       Thanks to Diaoliang.
+    *) Bugfix: fixed a bug in 'backtrace_max_stack_size'. (monadbobo)
 
-    *) Bugfix: fixes the footer module bug when output body is empty.
-       Thanks to Xiongjunmin.
+    *) Bugfix: fixed a bug in the footer module when output body is empty.
+       (dinic)
 
-    *) Bugfix: fixes the last hostname letter bug of syslog.
-       Thanks to Weiyue.
+    *) Bugfix: fixed the last hostname letter omitted bug in syslog.
+       (cfsego)
+
 
 Changes with Tengine 1.2.1                                         06 Dev 2011
 
-    *) Bugfix: fixes the segmentation fault in case of using default error log
-       or access log of tengine. This bug was introduced by creating file
-       doesn't exist.
-       Thanks to Yuanzhuo.
+    *) Bugfix: fixed a segmentation fault bug when using default error log
+       or access log. (yzprofile)
+
 
 Changes with Tengine 1.2.0                                         29 Nov 2011
 
-    *) The first public release.
+    *) This is the first public release.
 
-    *) Feature: adds syslog support to error_log and access_log.
-       Thanks to Weiyue.
+    *) Feature: added syslog support to error_log and access_log. (cfsego)
 
-    *) Feature: adds pipe support to error_log and access_log.
-       Thanks to Weiyue.
+    *) Feature: added pipe support to error_log and access_log. (cfsego)
 
-    *) Feature: adds realloc() APIs.
-       Thanks to Gongyuan.
+    *) Feature: added realloc() related APIs. (gongyuan)
 
-    *) Feature: supports more time specific variables.
-       Thanks to Yixiao.
+    *) Feature: added time specific variables. (skoo87)
 
-    *) Feature: the backtrace module.
-       Thanks to Diaoliang.
+    *) Feature: added the backtrace module. (monadbobo)
 
-    *) Feature: add whitelist to limit_req and more limit_req directives
-       are allowed in a location.
-       Thanks to Diaoliang.
+    *) Feature: added whitelist support to the limit_req module. (monadbobo)
 
-    *) Feature: the sysguard module.
-       Thanks to Lizi.
+    *) Feature: now more limit_req directives are allowed in a single location.
+       (monadbobo)
 
-    *) Change: suppresses warnings when dumping config contents.
-       Thanks to Piaoling.
+    *) Feature: added the sysguard module. (lifeibo)
 
-    *) Feature: adds two new APIs, ngx_http_header_in and ngx_http_header_out.
-       Thanks to Lizi.
+    *) Feature: added two APIs, ngx_http_header_in and ngx_http_header_out.
+       (lifeibo)
 
-    *) Feature: adds two variables, $request_time_msec and $request_time_usec.
-       Thanks to Jinglong.
+    *) Feature: added two variables, $request_time_msec and $request_time_usec.
+       (jinglong)
 
-    *) Feature: the module ngx_http_footer_filter_module.
-       Thanks to Yunxing.
+    *) Feature: added the footer module. (yunxing)
 
-    *) Feature: adds variable $conn_requests which is similar %K in Apache.
-       Thanks to Lieyuan.
+    *) Feature: added the $conn_requests variable which is similar to Apache's
+       '%K'. (lieyuan)
 
-    *) Feature: adds variable $host_comment to show hostnames and time.
-       Thanks to Yunxing.
+    *) Feature: added the $host_comment variable. (yunxing)
 
-    *) Bugfix: fixes $sent_http_connection and $sent_http_keep_alive.
-       Thanks to Zhongsheng.
+    *) Feature: added a 'ratio' parameter to access_log so now access log can
+       be sampled. (cfsego)
 
-    *) Feature: adds 'ratio' parameter to access_log so now access log can be
-       sampled.
-       Thanks to Weiyue.
-    *) Bugfix: fixes the file in open_file_cache can't be updated.
-       Thanks to Weiyue.
+    *) Feature: added the 'server_info' and 'server_admin' directives to show
+       more information when 4xx/5xx errors encountered. (lieyuan)
 
-    *) Feature: adds the 'server_info' and 'server_admin' directives to show
-       more information when 4xx/5xx errors encountered.
-       Thanks to Lieyuan.
+    *) Feature: added the '-d' command line option to dump contents of
+       the configuration files. (piaoling)
 
-    *) Feature: adds the '-d' option to dump content of configuration file.
-       Thanks to Piaoling.
+    *) Feature: added response time statistics to the stub_status module.
+       (jinglong)
 
-    *) Change: 'msie_padding' is now turned off by default.
-       Thanks to Shudu.
+    *) Feature: added the 'server_tag' directive. (zhuzhaoyuan)
 
-    *) Bugfix: fixes the bug when subrequest_in_memory and upstream keepalive
-       being used.
-       Thanks to Lizi.
+    *) Feature: now the 'worker_processes' supports the 'auto' parameter, which
+       sets the worker process numbers to the cores automatically. (cfsego)
 
-    *) Feature: adds the 'expires_by_types' directive.
-       Thanks to Lizi.
+    *) Feature: now the 'worker_cpu_affinity' directive supports the 'auto'
+       parameter, which binds the worker processes to the cores automatically.
+       (cfsego)
 
-    *) Feature: adds the '-l' option to list all supported directives.
-       Thanks to Junmin Xiong.
+    *) Feature: added the 'ssl_pass_phrase_dialog' directive. (cfsego)
 
-    *) Feature: adds the ngx_atoll() API, which can convert a string to a long
-       long integer (64 bits).
-       Thanks to Lizi.
+    *) Feature: added the '-s start' command line option. (zhuzhaoyuan)
 
-    *) Feature: now status lines (302, 405) are RFC-2616 compatibale.
-       Thanks to Shudu.
+    *) Feature: added '-m' command line option to list all compiled-in modules.
+       (zhuzhaoyuan)
+
+    *) Feature: added the 'expires_by_types' directive. (lifeibo)
+
+    *) Feature: added the '-l' command line option to list all supported
+       directives. (dinic)
+
+    *) Feature: added the ngx_atoll() API, which can convert a string to a long
+       long integer (64 bits). (lifeibo)
+
+    *) Feature: now status lines (302, 405) are RFC-2616 compatibale. (zhuzhaoyuan)
 
     *) Feature: now ngx_escape_uri/ngx_unescape_uri supports encoding/decoding
-       style of Java and PHP.
-       Thanks to Shudu.
+       style of Java and PHP. (zhuzhaoyuan)
 
-    *) Feature: now config files included are sorted.
-       Thanks to Shudu.
+    *) Feature: now configuration files included are sorted. (zhuzhaoyuan)
 
-    *) Feature: error_page now supports default error page (nginx).
-       Thanks to Shudu.
+    *) Feature: now 'error_page' can be reset to 'default' (zhuzhaoyuan)
 
-    *) Bugfix: error_page directive can't detect duplicate codes and inherited
-       correctly.
-       Thanks to Shudu.
+    *) Change: turned 'msie_padding' off by default. (zhuzhaoyuan)
 
-    *) Feature: add response time statistics to the stub_status module.
-       Thanks to Jinglong.
+    *) Bugfix: fixed a bug when subrequest_in_memory and upstream keepalive
+       being used. (lifeibo)
 
-    *) Feature: the "server_tag" directive.
-       Thanks to Shudu.
+    *) Bugfix: fixed a bug in $sent_http_connection and $sent_http_keep_alive.
+       (zhongsheng)
 
-    *) Feature: now the "worker_processes" supports "auto" parameter, which
-       sets the worker process numbers to the cores automatically.
-       Thanks to Weiyue.
+    *) Bugfix: fixed a bug that error_page directive can't detect duplicate
+       codes and inherited correctly. (zhuzhaoyuan)
 
-    *) Feature: now the "worker_cpu_affinity" supports "auto" parameter,
-       which binds the worker processes to the cores automatically.
-       Thanks to Weiyue.
+    *) Bugfix: fixed a segmentation fault bug in the FastCGI module, while
+       processing duplicated HTTP headers. (monadbobo)
 
-    *) Feature: the "ssl_pass_phrase_dialog" directive.
-       Thanks to Weiyue.
+    *) Bugfix: fixed a bug that file in open_file_cache can't be updated.
+       (cfsego)
 
-    *) Feature: adds "-s start" option.
-       Thanks to Shudu.
-
-    *) Feature: adds "-m" option to list all compiled in modules.
-       Thanks to Shudu.
-
-    *) Bugfix: a segmentation fault might occur in FastCGI module, while
-       processing duplicated HTTP headers; the bug had appeared in 0.8.40.
-       Thanks to Diaoliang.
-
-    *) Bugfix: "worker_cpu_affinity" might be wrong.
-       Thanks to Weiyue.
+    *) Bugfix: fixed a bug in 'worker_cpu_affinity'. (cfsego)

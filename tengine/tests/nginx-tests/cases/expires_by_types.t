@@ -11,29 +11,33 @@ use strict;
 
 use Test::More;
 use File::Copy;
-use Time::Parse;
 
 BEGIN { use FindBin; chdir($FindBin::Bin); }
 
 use lib 'lib';
 use Test::Nginx;
+use Time::Parse;
 
 
 ###############################################################################
 
-
-print $ENV{TEST_NGINX_BINARY};
-
 select STDERR; $| = 1;
 select STDOUT; $| = 1;
 
-my $t = Test::Nginx->new()->plan(72)
-	->write_file_expand('nginx.conf', <<'EOF');
+my $t = Test::Nginx->new()->plan(72);
+
+$t->set_dso("ngx_http_fastcgi_module", "ngx_http_fastcgi_module.so");
+$t->set_dso("ngx_http_uwsgi_module", "ngx_http_uwsgi_module.so");
+$t->set_dso("ngx_http_scgi_module", "ngx_http_scgi_module.so");
+
+$t->write_file_expand('nginx.conf', <<'EOF');
 
 %%TEST_GLOBALS%%
 
 master_process off;
 daemon         off;
+
+%%TEST_GLOBALS_DSO%%
 
 events {
 }
@@ -162,6 +166,8 @@ $t->write_file_expand('nginx.conf', <<'EOF');
 master_process off;
 daemon         off;
 
+%%TEST_GLOBALS_DSO%%
+
 events {
 }
 
@@ -236,6 +242,8 @@ $t->write_file_expand('nginx.conf', <<'EOF');
 
 master_process off;
 daemon         off;
+
+%%TEST_GLOBALS_DSO%%
 
 events {
 }
@@ -313,6 +321,8 @@ $t->write_file_expand('nginx.conf', <<'EOF');
 
 master_process off;
 daemon         off;
+
+%%TEST_GLOBALS_DSO%%
 
 events {
 }
@@ -392,6 +402,8 @@ $t->write_file_expand('nginx.conf', <<'EOF');
 
 master_process off;
 daemon         off;
+
+%%TEST_GLOBALS_DSO%%
 
 events {
 }
@@ -473,6 +485,8 @@ $t->write_file_expand('nginx.conf', <<'EOF');
 
 master_process off;
 daemon         off;
+
+%%TEST_GLOBALS_DSO%%
 
 events {
 }
@@ -556,6 +570,8 @@ $t->write_file_expand('nginx.conf', <<'EOF');
 master_process off;
 daemon         off;
 
+%%TEST_GLOBALS_DSO%%
+
 events {
 }
 
@@ -636,6 +652,8 @@ $t->write_file_expand('nginx.conf', <<'EOF');
 
 master_process off;
 daemon         off;
+
+%%TEST_GLOBALS_DSO%%
 
 events {
 }

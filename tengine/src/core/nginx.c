@@ -187,11 +187,10 @@ ngx_module_t  ngx_core_module = {
 ngx_uint_t          ngx_max_module;
 ngx_uint_t          ngx_dump_config;
 
+
 static ngx_uint_t   ngx_show_help;
 static ngx_uint_t   ngx_show_version;
-static ngx_uint_t   ngx_show_modules;
 static ngx_uint_t   ngx_show_configure;
-static ngx_uint_t   ngx_show_directives;
 static u_char      *ngx_prefix;
 static u_char      *ngx_conf_file;
 static u_char      *ngx_conf_params;
@@ -207,12 +206,9 @@ main(int argc, char *const *argv)
     ngx_int_t         i;
     ngx_log_t        *log;
     ngx_cycle_t      *cycle, init_cycle;
-    ngx_command_t    *cmd;
     ngx_core_conf_t  *ccf;
 
-#if (NGX_FREEBSD)
     ngx_debug_init();
-#endif
 
     if (ngx_strerror_init() != NGX_OK) {
         return 1;
@@ -272,32 +268,7 @@ main(int argc, char *const *argv)
                 "configure arguments:" NGX_CONFIGURE NGX_LINEFEED);
         }
 
-        if (ngx_show_modules) {
-            ngx_log_stderr(0, "compiled in modules:");
-
-            for (i = 0; ngx_module_names[i]; i++) {
-                ngx_log_stderr(0, "    %s", ngx_module_names[i]);
-            }
-        }
-
-        if (ngx_show_directives) {
-            ngx_log_stderr(0, "all available directives:");
-
-            for (i = 0; ngx_modules[i]; i++) {
-               ngx_log_stderr(0, "%s:", ngx_module_names[i]);
-
-               cmd = ngx_modules[i]->commands;
-               if(cmd == NULL) {
-                  continue;
-               }
-
-               for ( /* void */ ; cmd->name.len; cmd++) {
-                  ngx_log_stderr(0, "    %V", &cmd->name);
-               }
-            }
-        }
-
-        if(!ngx_test_config) {
+        if(!ngx_test_config && !ngx_show_modules && !ngx_show_directives) {
             return 0;
         }
     }
@@ -381,6 +352,10 @@ main(int argc, char *const *argv)
                            cycle->conf_file.data);
         }
 
+        return 0;
+    }
+
+    if (ngx_show_modules || ngx_show_directives) {
         return 0;
     }
 
@@ -695,7 +670,7 @@ ngx_exec_new_binary(ngx_cycle_t *cycle, char *const *argv)
         if (ngx_rename_file(ccf->oldpid.data, ccf->pid.data) != NGX_OK) {
             ngx_log_error(NGX_LOG_ALERT, cycle->log, ngx_errno,
                           ngx_rename_file_n " %s back to %s failed after "
-                          "the try to execute the new binary process \"%s\"",
+                          "an attempt to execute new binary process \"%s\"",
                           ccf->oldpid.data, ccf->pid.data, argv[0]);
         }
     }
@@ -1042,9 +1017,9 @@ ngx_core_module_init_conf(ngx_cycle_t *cycle, void *conf)
 {
     ngx_core_conf_t  *ccf = conf;
 
-#if (NGX_HAVE_SCHED_SETAFFINITY)
+#if (NGX_HAVE_CPU_AFFINITY)
     ngx_int_t         i, n;
-    cpu_set_t        *mask;
+    CPU_SET_T        *mask;
 #endif
 
     if (!ccf->worker_processes) {
@@ -1058,7 +1033,7 @@ ngx_core_module_init_conf(ngx_cycle_t *cycle, void *conf)
     ngx_conf_init_msec_value(ccf->timer_resolution, 0);
     ngx_conf_init_value(ccf->debug_points, 0);
 
-#if (NGX_HAVE_SCHED_SETAFFINITY)
+#if (NGX_HAVE_CPU_AFFINITY)
 
     if (ccf->cpu_affinity_n == 0) {
 
@@ -1068,7 +1043,7 @@ ngx_core_module_init_conf(ngx_cycle_t *cycle, void *conf)
         if (ngx_ncpu > 0 && ngx_ncpu <= CPU_SETSIZE) {
 
             mask = ngx_palloc(cycle->pool,
-                              ccf->worker_processes * sizeof(cpu_set_t));
+                              ccf->worker_processes * sizeof(CPU_SET_T));
             if (mask == NULL) {
                 return NGX_CONF_ERROR;
             }
@@ -1096,8 +1071,8 @@ ngx_core_module_init_conf(ngx_cycle_t *cycle, void *conf)
         && ccf->cpu_affinity_n != (ngx_uint_t) ccf->worker_processes)
     {
         ngx_log_error(NGX_LOG_WARN, cycle->log, 0,
-                      "number of the \"worker_processes\" is not equal to "
-                      "the number of the \"worker_cpu_affinity\" mask, "
+                      "the number of \"worker_processes\" is not equal to "
+                      "the number of \"worker_cpu_affinity\" masks, "
                       "using last mask for remaining worker processes");
     }
 
@@ -1371,28 +1346,35 @@ ngx_set_worker_processes(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 static char *
 ngx_set_cpu_affinity(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 {
-#if (NGX_HAVE_SCHED_SETAFFINITY)
+#if (NGX_HAVE_CPU_AFFINITY)
     ngx_core_conf_t  *ccf = conf;
 
     u_char            ch;
-    cpu_set_t        *mask;
+    CPU_SET_T        *mask;
     ngx_str_t        *value;
     ngx_uint_t        i, j, n;
 
-    if (ccf->cpu_affinity) {
+    if (ccf->cpu_affinity || ccf->cpu_affinity_n) {
         return "is duplicate";
     }
 
     value = cf->args->elts;
 
-    if (ngx_strncasecmp((u_char *) "auto", value[1].data, 4) == 0) {
+    if (ngx_strcasecmp((u_char *) "auto", value[1].data) == 0) {
 
         ccf->cpu_affinity = NGX_CONF_UNSET_PTR;
 
         return NGX_CONF_OK;
     }
 
-    mask = ngx_palloc(cf->pool, (cf->args->nelts - 1) * sizeof(cpu_set_t));
+    if (ngx_strcasecmp((u_char *) "off", value[1].data) == 0) {
+
+        ccf->cpu_affinity_n = 1;
+
+        return NGX_CONF_OK;
+    }
+
+    mask = ngx_palloc(cf->pool, (cf->args->nelts - 1) * sizeof(CPU_SET_T));
     if (mask == NULL) {
         return NGX_CONF_ERROR;
     }
@@ -1441,9 +1423,9 @@ ngx_set_cpu_affinity(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     return NGX_CONF_OK;
 }
 
-#if (NGX_HAVE_SCHED_SETAFFINITY)
+#if (NGX_HAVE_CPU_AFFINITY)
 
-cpu_set_t *
+CPU_SET_T *
 ngx_get_cpu_affinity(ngx_uint_t n)
 {
     ngx_core_conf_t  *ccf;

@@ -23,7 +23,7 @@ select STDOUT; $| = 1;
 
 eval { require FCGI; };
 plan(skip_all => 'FCGI not installed') if $@;
-
+plan(skip_all => 'win32') if $^O eq 'MSWin32';
 
 my $t = Test::Nginx->new()->has(qw/http fastcgi cache/)->plan(4)
 	->write_file_expand('nginx.conf', <<'EOF');
@@ -67,15 +67,10 @@ $t->run();
 
 ###############################################################################
 
-TODO: {
-local $TODO = 'not yet';
-
 like(http_get_ims('/'), qr/ims=;/,
 	'if-modified-since cleared with cache');
 like(http_get_ims('/'), qr/iums=;/,
 	'if-unmodified-since cleared with cache');
-
-}
 
 like(http_get_ims('/no/'), qr/ims=blah;/,
 	'if-modified-since preserved without cache');

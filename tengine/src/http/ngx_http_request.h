@@ -10,7 +10,7 @@
 
 
 #define NGX_HTTP_MAX_URI_CHANGES           10
-#define NGX_HTTP_MAX_SUBREQUESTS           50
+#define NGX_HTTP_MAX_SUBREQUESTS           200
 
 /* must be 2^n */
 #define NGX_HTTP_LC_HEADER_LEN             32
@@ -75,6 +75,7 @@
 #define NGX_HTTP_MOVED_TEMPORARILY         302
 #define NGX_HTTP_SEE_OTHER                 303
 #define NGX_HTTP_NOT_MODIFIED              304
+#define NGX_HTTP_TEMPORARY_REDIRECT        307
 
 #define NGX_HTTP_BAD_REQUEST               400
 #define NGX_HTTP_UNAUTHORIZED              401
@@ -136,6 +137,13 @@
 #define NGX_HTTP_COPY_BUFFERED             0x04
 
 
+#if (NGX_HTTP_PROXY || NGX_HTTP_REALIP || NGX_HTTP_GEO)
+#ifndef NGX_HTTP_X_FORWARDED_FOR
+#define NGX_HTTP_X_FORWARDED_FOR           1
+#endif
+#endif
+
+
 typedef enum {
     NGX_HTTP_INITING_REQUEST_STATE = 0,
     NGX_HTTP_READING_REQUEST_STATE,
@@ -191,7 +199,7 @@ typedef struct {
 
     ngx_table_elt_t                  *keep_alive;
 
-#if (NGX_HTTP_PROXY || NGX_HTTP_REALIP || NGX_HTTP_GEO)
+#if (NGX_HTTP_X_FORWARDED_FOR)
     ngx_table_elt_t                  *x_forwarded_for;
 #endif
 
@@ -479,10 +487,10 @@ struct ngx_http_request_s {
 
     /*
      * instead of using the request context data in
-     * ngx_http_limit_zone_module and ngx_http_limit_req_module
+     * ngx_http_limit_conn_module and ngx_http_limit_req_module
      * we use the single bits in the request structure
      */
-    unsigned                          limit_zone_set:1;
+    unsigned                          limit_conn_set:1;
     unsigned                          limit_req_set:1;
     unsigned                          sysguard_set:1;
 

@@ -22,6 +22,8 @@ use Test::Nginx;
 select STDERR; $| = 1;
 select STDOUT; $| = 1;
 
+plan(skip_all => 'win32') if $^O eq 'MSWin32';
+
 my $t = Test::Nginx->new()->has(qw/http proxy cache/)
 	->write_file_expand('nginx.conf', <<'EOF');
 
@@ -54,7 +56,7 @@ http {
             proxy_cache   NAME;
 
             proxy_cache_lock on;
-            proxy_cache_lock_timeout 300ms;
+            proxy_cache_lock_timeout 200ms;
         }
 
         location /nolock {
@@ -76,6 +78,7 @@ eval {
 plan(skip_all => 'no proxy_cache_lock') if $@;
 
 $t->plan(19);
+$t->waitforsocket('127.0.0.1:8081');
 
 ###############################################################################
 
@@ -134,7 +137,7 @@ sub http_start {
 	eval {
 		local $SIG{ALRM} = sub { die "timeout\n" };
 		local $SIG{PIPE} = sub { die "sigpipe\n" };
-		alarm(2);
+		alarm(3);
 		$s = IO::Socket::INET->new(
 			Proto => 'tcp',
 			PeerAddr => '127.0.0.1:8080'
@@ -158,7 +161,7 @@ sub http_end {
 	eval {
 		local $SIG{ALRM} = sub { die "timeout\n" };
 		local $SIG{PIPE} = sub { die "sigpipe\n" };
-		alarm(2);
+		alarm(3);
 		local $/;
 		$reply = $s->getline();
 		log_in($reply);
@@ -178,7 +181,7 @@ sub http_fake_daemon {
 	my $server = IO::Socket::INET->new(
 		Proto => 'tcp',
 		LocalAddr => '127.0.0.1:8081',
-		Listen => 1,
+		Listen => 5,
 		Reuse => 1
 	)
 		or die "Can't create listening socket: $!\n";
@@ -194,12 +197,14 @@ sub http_fake_daemon {
 				$uri = $1;
 				$num = 0;
 			}
-				
+
 			$uri = $1 if /GET (.*) HTTP/;
 			last if /^\x0d?\x0a?$/;
 		}
 
-		sleep(1);
+		next unless $uri;
+
+		select(undef, undef, undef, 0.5);
 
 		$num++;
 		print $client <<"EOF";

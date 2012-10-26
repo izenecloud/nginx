@@ -286,23 +286,15 @@ ngx_conf_handler(ngx_conf_t *cf, ngx_int_t last)
 {
     char           *rv;
     void           *conf, **confp;
-    ngx_uint_t      i, multi;
+    ngx_uint_t      i, found;
     ngx_str_t      *name;
     ngx_command_t  *cmd;
 
     name = cf->args->elts;
 
-    multi = 0;
+    found = 0;
 
     for (i = 0; ngx_modules[i]; i++) {
-
-        /* look up the directive in the appropriate modules */
-
-        if (ngx_modules[i]->type != NGX_CONF_MODULE
-            && ngx_modules[i]->type != cf->module_type)
-        {
-            continue;
-        }
 
         cmd = ngx_modules[i]->commands;
         if (cmd == NULL) {
@@ -319,16 +311,18 @@ ngx_conf_handler(ngx_conf_t *cf, ngx_int_t last)
                 continue;
             }
 
+            found = 1;
+
+            if (ngx_modules[i]->type != NGX_CONF_MODULE
+                && ngx_modules[i]->type != cf->module_type)
+            {
+                continue;
+            }
 
             /* is the directive's location right ? */
 
             if (!(cmd->type & cf->cmd_type)) {
-                if (cmd->type & NGX_CONF_MULTI) {
-                    multi = 1;
-                    continue;
-                }
-
-                goto not_allowed;
+                continue;
             }
 
             if (!(cmd->type & NGX_CONF_BLOCK) && last != NGX_OK) {
@@ -412,17 +406,16 @@ ngx_conf_handler(ngx_conf_t *cf, ngx_int_t last)
         }
     }
 
-    if (multi == 0) {
+    if (found) {
         ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
-                           "unknown directive \"%s\"", name->data);
+                           "\"%s\" directive is not allowed here", name->data);
 
         return NGX_ERROR;
     }
 
-not_allowed:
-
     ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
-                       "\"%s\" directive is not allowed here", name->data);
+                       "unknown directive \"%s\"", name->data);
+
     return NGX_ERROR;
 
 invalid:
@@ -469,7 +462,7 @@ ngx_conf_read_token(ngx_conf_t *cf)
 
             if (cf->conf_file->file.offset >= file_size) {
 
-                if (cf->args->nelts > 0) {
+                if (cf->args->nelts > 0 || !last_space) {
 
                     if (cf->conf_file->file.fd == NGX_INVALID_FILE) {
                         ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
@@ -1303,10 +1296,6 @@ ngx_conf_set_msec_slot(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
         return "invalid value";
     }
 
-    if (*msp == (ngx_msec_t) NGX_PARSE_LARGE_TIME) {
-        return "value must be less than 597 hours";
-    }
-
     if (cmd->post) {
         post = cmd->post;
         return post->post_handler(cf, post, msp);
@@ -1334,12 +1323,8 @@ ngx_conf_set_sec_slot(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     value = cf->args->elts;
 
     *sp = ngx_parse_time(&value[1], 1);
-    if (*sp == NGX_ERROR) {
+    if (*sp == (time_t) NGX_ERROR) {
         return "invalid value";
-    }
-
-    if (*sp == NGX_PARSE_LARGE_TIME) {
-        return "value must be less than 68 years";
     }
 
     if (cmd->post) {
@@ -1464,11 +1449,15 @@ ngx_conf_set_bitmask_slot(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 }
 
 
+#if 0
+
 char *
 ngx_conf_unsupported(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 {
     return "unsupported on this platform";
 }
+
+#endif
 
 
 char *
@@ -1497,7 +1486,8 @@ ngx_conf_check_num_bounds(ngx_conf_t *cf, void *post, void *data)
         }
 
         ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
-                           "value must be equal or more than %i", bounds->low);
+                           "value must be equal to or greater than %i",
+                           bounds->low);
 
         return NGX_CONF_ERROR;
     }

@@ -21,6 +21,8 @@ use Test::Nginx;
 select STDERR; $| = 1;
 select STDOUT; $| = 1;
 
+plan(skip_all => 'win32') if $^O eq 'MSWin32';
+
 my $t = Test::Nginx->new()->has(qw/http rewrite/)->plan(9)
 	->write_file_expand('nginx.conf', <<'EOF');
 
@@ -33,6 +35,8 @@ events {
 
 http {
     %%TEST_GLOBALS_HTTP%%
+
+    server_names_hash_bucket_size 64;
 
     server {
         listen       127.0.0.1:8080;

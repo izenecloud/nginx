@@ -23,6 +23,7 @@ select STDOUT; $| = 1;
 
 eval { require FCGI; };
 plan(skip_all => 'FCGI not installed') if $@;
+plan(skip_all => 'win32') if $^O eq 'MSWin32';
 
 my $t = Test::Nginx->new()->has(qw/http fastcgi cache/)->plan(5)
 	->write_file_expand('nginx.conf', <<'EOF');
@@ -83,7 +84,7 @@ sub fastcgi_daemon {
 		if ($ENV{REQUEST_URI} eq '/stderr') {
 			warn "sample stderr text" x 512;
 		}
-		
+
 		print <<EOF;
 Location: http://127.0.0.1:8080/redirect
 Content-Type: text/html

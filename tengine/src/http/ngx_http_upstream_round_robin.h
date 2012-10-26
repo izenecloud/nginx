@@ -20,13 +20,19 @@ typedef struct {
     ngx_str_t                       name;
 
     ngx_int_t                       current_weight;
+    ngx_int_t                       effective_weight;
     ngx_int_t                       weight;
 
     ngx_uint_t                      fails;
     time_t                          accessed;
+    time_t                          checked;
 
     ngx_uint_t                      max_fails;
     time_t                          fail_timeout;
+
+#if (NGX_HTTP_UPSTREAM_CHECK)
+    ngx_uint_t                      check_index;
+#endif
 
     ngx_uint_t                      down;          /* unsigned  down:1; */
 
@@ -39,12 +45,16 @@ typedef struct {
 typedef struct ngx_http_upstream_rr_peers_s  ngx_http_upstream_rr_peers_t;
 
 struct ngx_http_upstream_rr_peers_s {
-    ngx_uint_t                      single;        /* unsigned  single:1; */
     ngx_uint_t                      number;
     ngx_uint_t                      last_cached;
 
  /* ngx_mutex_t                    *mutex; */
     ngx_connection_t              **cached;
+
+    ngx_uint_t                      total_weight;
+
+    unsigned                        single:1;
+    unsigned                        weighted:1;
 
     ngx_str_t                      *name;
 

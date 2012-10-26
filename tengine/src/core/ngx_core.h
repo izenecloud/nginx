@@ -65,6 +65,7 @@ typedef void (*ngx_connection_handler_pt)(ngx_connection_t *c);
 #if (NGX_PCRE)
 #include <ngx_regex.h>
 #endif
+#include <ngx_trie.h>
 #include <ngx_radix_tree.h>
 #include <ngx_times.h>
 #include <ngx_shmtx.h>
@@ -84,6 +85,9 @@ typedef void (*ngx_connection_handler_pt)(ngx_connection_t *c);
 #endif
 #include <ngx_pipe.h>
 
+#if (NGX_PROCS)
+#include <ngx_proc.h>
+#endif
 
 #define LF     (u_char) 10
 #define CR     (u_char) 13
@@ -96,5 +100,10 @@ typedef void (*ngx_connection_handler_pt)(ngx_connection_t *c);
 
 void ngx_cpuinfo(void);
 
+#if (NGX_HAVE_OPENAT)
+#define NGX_DISABLE_SYMLINKS_OFF        0
+#define NGX_DISABLE_SYMLINKS_ON         1
+#define NGX_DISABLE_SYMLINKS_NOTOWNER   2
+#endif
 
 #endif /* _NGX_CORE_H_INCLUDED_ */
