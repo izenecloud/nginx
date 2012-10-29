@@ -92,6 +92,7 @@ set(HEADERS_MORE_MODULE agentzh-headers-more-nginx-module-de77fd2)
 set(HELLO_MODULE nginx-hello-module)
 set(SF1R_MODULE sf1r-module)
 set(FLUENTD_MODULE nginx-fluentd-module)
+set(TFS_MODULE ngx_http_tfs_module)
 
 list(APPEND MODULE_DIRS
     ${ECHO_MODULE}
@@ -99,6 +100,7 @@ list(APPEND MODULE_DIRS
     ${HELLO_MODULE}
     ${SF1R_MODULE}
     ${FLUENTD_MODULE}
+    ${TFS_MODULE}
 )
 
 
@@ -115,7 +117,6 @@ message(STATUS "libraries: ${sf1r_LIBS}")
 
 configure_file(${nginx_SOURCE_DIR}/${SF1R_MODULE}/config.in 
                ${nginx_SOURCE_DIR}/${SF1R_MODULE}/config)
-
 
 # modules summary
 if (MODULE_DIRS)

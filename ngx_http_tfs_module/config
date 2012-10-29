@@ -1,0 +1,7 @@
+USE_MD5=YES
+USE_SHA1=YES
+ngx_addon_name=ngx_http_tfs_module
+HTTP_MODULES="$HTTP_MODULES ngx_http_tfs_module"
+CORE_INCS="$CORE_INCS $HOME/tfs_bin/include $TBLIB_ROOT/include/tbnet $TBLIB_ROOT/include/tbsys  /usr/include/GraphicsMagick"
+NGX_ADDON_SRCS="$NGX_ADDON_SRCS $ngx_addon_dir/ngx_http_tfs_module.cpp"
+CORE_LIBS="$CORE_LIBS -lstdc++ -L$HOME/tfs_bin/lib/ -L$TBLIB_ROOT/lib -ltfsclient -ltbnet -ltbsys `GraphicsMagick++-config --libs` "
