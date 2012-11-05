@@ -165,7 +165,12 @@ ngx_http_tfs_get_args_tfsname(ngx_http_request_t *r, u_char *ret, u_char* zoompa
                 ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "tfs zoom param too long:%d.\n", zoom_param_len);
                 return NGX_ERROR;
             }
-            strncpy((char*)zoomparam, zoom_pos + ZOOMPARAM_KEY.len, zoom_param_len);
+            u_char* tmp = (u_char*)ngx_create_temp_buf(r->pool, zoom_param_len);
+            //strncpy((char*)zoomparam, zoom_pos + ZOOMPARAM_KEY.len, zoom_param_len);
+            strncpy((char*)tmp, zoom_pos + ZOOMPARAM_KEY.len, zoom_param_len);
+            tmp[zoom_param_len - 1] = '\0';
+            u_char* p = zoomparam;
+            ngx_unescape_uri(&p, &tmp, zoom_param_len, NGX_UNESCAPE_URI);
             zoomparam[zoom_param_len - 1] = '\0';
         }
         else
