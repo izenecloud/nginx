@@ -112,7 +112,8 @@ ngx_tfs_init_process(ngx_cycle_t* cycle) {
         if(ret != TFS_SUCCESS)
         {
             ngx_log_error(NGX_LOG_ERR, cycle->log, 0, "init tfsclient failed.");
-            return NGX_ERROR;
+            loc_confs[i]->tfsclient = NULL;
+            return NGX_OK;
         }
     }
     TBSYS_LOGGER.setLogLevel("WARN");
