@@ -199,6 +199,7 @@ ngx_http_tfs_get_handler(ngx_http_request_t *r)
     cglcf = (ngx_http_tfs_ns_loc_conf_t*)ngx_http_get_module_loc_conf(r, ngx_http_tfs_module);
 
     if (!(r->method & (NGX_HTTP_GET|NGX_HTTP_HEAD))) {
+        ngx_log_error(NGX_LOG_INFO, r->connection->log, 0, "reject tfs get request for not allowed method : %d.", r->method);
         return NGX_HTTP_NOT_ALLOWED;
     }
     if (r->headers_in.if_modified_since) {
