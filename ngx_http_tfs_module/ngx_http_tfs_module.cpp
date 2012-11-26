@@ -132,20 +132,22 @@ ngx_http_tfs_get_args_tfsname(ngx_http_request_t *r, u_char *ret, u_char* zoompa
 	static const ngx_str_t TFSNAME_KEY = ngx_string("filename=");
 	static const ngx_str_t ZOOMPARAM_KEY = ngx_string("zoom=");
 	if(!r->args.len) {
-        ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "tfs get args failed 1.%s, %zu.\n ", r->args.data, r->args.len);
+        ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "tfs get args failed 1.%s, %zu.", r->args.data, r->args.len);
 		return NGX_ERROR;
 	}
 
+    ngx_log_error(NGX_LOG_INFO, r->connection->log, 0, "tfs parsing args .");
 	if(ngx_strncasecmp(r->args.data, TFSNAME_KEY.data, TFSNAME_KEY.len) == 0) {
 
         const char* separate_char = ngx_strchr( r->args.data + TFSNAME_KEY.len, '&');
         int tfs_filename_len = TFS_FILE_LEN;
+        ngx_log_error(NGX_LOG_INFO, r->connection->log, 0, "tfs parsing args step 2.");
         if(separate_char != NULL)
         {
             tfs_filename_len = separate_char - ((const char*)r->args.data + TFSNAME_KEY.len) + 1;
             if( tfs_filename_len > TFS_FILE_LEN)
             {
-                ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "tfs filename length is invalid:%d.\n", tfs_filename_len);
+                ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "tfs filename length is invalid:%d.", tfs_filename_len);
                 return NGX_ERROR;
             }
         }
@@ -153,6 +155,7 @@ ngx_http_tfs_get_args_tfsname(ngx_http_request_t *r, u_char *ret, u_char* zoompa
         ret[tfs_filename_len - 1] = '\0';
         zoomparam[0] = '\0';
         const char* zoom_pos = ngx_strstr(r->args.data, ZOOMPARAM_KEY.data);
+        ngx_log_error(NGX_LOG_INFO, r->connection->log, 0, "tfs parsing args step 3.");
         if(zoom_pos != NULL)
         {
             const char* separate_char = ngx_strchr( zoom_pos + ZOOMPARAM_KEY.len, '&');
@@ -163,7 +166,7 @@ ngx_http_tfs_get_args_tfsname(ngx_http_request_t *r, u_char *ret, u_char* zoompa
             }
             if(zoom_param_len > ZOOMPARAM_LEN)
             {
-                ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "tfs zoom param too long:%d.\n", zoom_param_len);
+                ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "tfs zoom param too long:%d.", zoom_param_len);
                 return NGX_ERROR;
             }
             u_char* tmp = (u_char*)ngx_create_temp_buf(r->pool, zoom_param_len);
@@ -176,12 +179,12 @@ ngx_http_tfs_get_args_tfsname(ngx_http_request_t *r, u_char *ret, u_char* zoompa
         }
         else
         {
-            ngx_log_error(NGX_LOG_INFO, r->connection->log, 0, "tfs get file without zoom.\n");
+            ngx_log_error(NGX_LOG_INFO, r->connection->log, 0, "tfs get file without zoom.");
         }
-        ngx_log_error(NGX_LOG_INFO, r->connection->log, 0, "tfs get filename:%s, zoom param:%s\n.", ret, zoomparam);
+        ngx_log_error(NGX_LOG_INFO, r->connection->log, 0, "tfs get filename:%s, zoom param:%s.", ret, zoomparam);
 		return NGX_OK;
 	}
-    ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "tfs get args failed 2. %s, %zu, %zu.\n", r->args.data, r->args.len, TFSNAME_KEY.len);
+    ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "tfs get args failed 2. %s, %zu, %zu.", r->args.data, r->args.len, TFSNAME_KEY.len);
 	return NGX_ERROR;
 }
 
@@ -199,7 +202,7 @@ ngx_http_tfs_get_handler(ngx_http_request_t *r)
     cglcf = (ngx_http_tfs_ns_loc_conf_t*)ngx_http_get_module_loc_conf(r, ngx_http_tfs_module);
 
     if (!(r->method & (NGX_HTTP_GET|NGX_HTTP_HEAD))) {
-        ngx_log_error(NGX_LOG_INFO, r->connection->log, 0, "reject tfs get request for not allowed method : %d.", r->method);
+        ngx_log_error(NGX_LOG_INFO, r->connection->log, 0, "reject tfs get request for not allowed method : %u.", r->method);
         return NGX_HTTP_NOT_ALLOWED;
     }
     if (r->headers_in.if_modified_since) {
