@@ -133,7 +133,7 @@ ngx_http_tfs_get_args_tfsname(ngx_http_request_t *r, u_char *ret, u_char* zoompa
 	static const ngx_str_t ZOOMPARAM_KEY = ngx_string("zoom=");
     static const int32_t MAX_ARGS_LEN = TFSNAME_KEY.len + ZOOMPARAM_KEY.len + TFS_FILE_LEN + 1 + ZOOMPARAM_LEN + 1;
     u_char args_str[MAX_ARGS_LEN];
-    ngx_cpystrn(args_str, r->args.data, min(MAX_ARGS_LEN - 1, (int32_t)r->args.len));
+    ngx_cpystrn(args_str, r->args.data, min(MAX_ARGS_LEN - 1, (int32_t)r->args.len + 1));
     args_str[MAX_ARGS_LEN - 1] = '\0';
 
     ngx_log_error(NGX_LOG_INFO, r->connection->log, 0, "tfs get args : %s.", args_str);
