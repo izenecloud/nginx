@@ -137,7 +137,7 @@ ngx_http_tfs_get_args_tfsname(ngx_http_request_t *r, u_char *ret, u_char* zoompa
     args_str[MAX_ARGS_LEN - 1] = '\0';
 
     ngx_log_error(NGX_LOG_INFO, r->connection->log, 0, "tfs get args : %s.", args_str);
-	if(!r->args.len) {
+	if(r->args.len < TFSNAME_KEY.len) {
         ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "tfs get args failed 1.%s, %zu.", r->args.data, r->args.len);
 		return NGX_ERROR;
 	}
@@ -158,7 +158,7 @@ ngx_http_tfs_get_args_tfsname(ngx_http_request_t *r, u_char *ret, u_char* zoompa
 		ngx_cpystrn(ret, (args_str + TFSNAME_KEY.len), tfs_filename_len);
         ret[tfs_filename_len - 1] = '\0';
         zoomparam[0] = '\0';
-        const char* zoom_pos = ngx_strstr(args_str, ZOOMPARAM_KEY.data);
+        const char* zoom_pos = ngx_strstr(args_str + TFSNAME_KEY.len + tfs_filename_len, ZOOMPARAM_KEY.data);
         if(zoom_pos != NULL)
         {
             const char* separate_char = ngx_strchr( zoom_pos + ZOOMPARAM_KEY.len, '&');
