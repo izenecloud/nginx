@@ -207,6 +207,7 @@ ngx_http_tfs_get_handler(ngx_http_request_t *r)
     }
 
     if( NGX_OK != ngx_http_tfs_get_args_tfsname(r, tfsname, zoomparam)) {
+        ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "reject tfs get request for wrong args. ");
     	return NGX_HTTP_NOT_ALLOWED;
     }
     int ret = 0;
