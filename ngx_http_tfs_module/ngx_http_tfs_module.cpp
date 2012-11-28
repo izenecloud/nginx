@@ -322,6 +322,7 @@ ngx_http_tfs_get_handler(ngx_http_request_t *r)
         {
             ngx_copy(b->pos, zoomed_imgdata.data(), zoomed_imgdata.length());
             r->headers_out.content_length_n = zoomed_imgdata.length();
+            b->last = b->pos + zoomed_imgdata.length();
         }
     }
     else
@@ -332,9 +333,12 @@ ngx_http_tfs_get_handler(ngx_http_request_t *r)
     out.buf = b;
     out.next = NULL;
 
+
     r->headers_out.content_type.len = sizeof("image/jpeg") - 1;
     r->headers_out.content_type.data = (u_char *) "image/jpeg";
     r->headers_out.status = NGX_HTTP_OK;
+
+    ngx_log_error(NGX_LOG_INFO, r->connection->log, 0, "Image resize process finished. content-len: %d, type:%s.", r->headers_out.content_length_n, r->headers_out.content_type.data);
 
     if (r->method == NGX_HTTP_HEAD) {
         rc = ngx_http_send_header(r);
