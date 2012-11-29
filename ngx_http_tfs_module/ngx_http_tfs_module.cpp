@@ -306,7 +306,7 @@ ngx_http_tfs_get_handler(ngx_http_request_t *r)
         return NGX_HTTP_NOT_FOUND;
 	}
 
-    static const ngx_str_t good_str = ngx_string("good");
+    //static const ngx_str_t good_str = ngx_string("good");
     if(ngx_strlen(zoomparam) > 0)
     {
         Blob imgdata;
@@ -324,8 +324,17 @@ ngx_http_tfs_get_handler(ngx_http_request_t *r)
                     zoom_param_geo.width(image.columns());
                 if(zoom_param_geo.height() == 0)
                     zoom_param_geo.height(image.rows());
-                if(ngx_strncasecmp(qualityparam, good_str.data, good_str.len) == 0)
+                if(ngx_strlen(qualityparam) > 0)
+                {
+                    unsigned int quality_i = 75;
+                    sscanf((const char*)qualityparam, "%d", &quality_i);
+                    if(quality_i < 50)
+                        quality_i = 50;
+                    if(quality_i > 100)
+                        quality_i = 100;
+                    image.quality(quality_i);
                     image.zoom(zoom_param_geo);
+                }
                 else
                     image.scale(zoom_param_geo);
             }
