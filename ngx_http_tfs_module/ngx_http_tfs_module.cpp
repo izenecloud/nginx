@@ -16,6 +16,7 @@ using namespace Magick;
 
 #define DEFAULT_TFS_READ_WRITE_SIZE (2 * 1024 * 1024)
 #define ZOOMPARAM_LEN 64
+#define QUALITY_LEN 4
 #define scast(T,V)                      static_cast< T >( (V) )
 #define TFS_NS_ARRAY_INIT_SIZE             4
 
@@ -127,11 +128,12 @@ ngx_tfs_exit_process(ngx_cycle_t* cycle) {
 
 
 static ngx_int_t
-ngx_http_tfs_get_args_tfsname(ngx_http_request_t *r, u_char *ret, u_char* zoomparam)
+ngx_http_tfs_get_args_tfsname(ngx_http_request_t *r, u_char *ret, u_char* zoomparam, u_char* qualityparam)
 {
 	static const ngx_str_t TFSNAME_KEY = ngx_string("filename=");
 	static const ngx_str_t ZOOMPARAM_KEY = ngx_string("zoom=");
-    static const int32_t MAX_ARGS_LEN = TFSNAME_KEY.len + ZOOMPARAM_KEY.len + TFS_FILE_LEN + 1 + ZOOMPARAM_LEN + 1;
+	static const ngx_str_t QUALITY_KEY = ngx_string("quality=");
+    static const int32_t MAX_ARGS_LEN = TFSNAME_KEY.len + ZOOMPARAM_KEY.len + QUALITY_KEY.len + TFS_FILE_LEN + 1 + ZOOMPARAM_LEN + QUALITY_LEN + 1;
     u_char args_str[MAX_ARGS_LEN];
     ngx_cpystrn(args_str, r->args.data, min(MAX_ARGS_LEN - 1, (int32_t)r->args.len + 1));
     args_str[MAX_ARGS_LEN - 1] = '\0';
@@ -180,6 +182,32 @@ ngx_http_tfs_get_args_tfsname(ngx_http_request_t *r, u_char *ret, u_char* zoompa
             u_char* p = zoomparam;
             ngx_unescape_uri(&p, &tmp, zoom_param_len, NGX_UNESCAPE_URI);
             zoomparam[zoom_param_len - 1] = '\0';
+            const char* quality_pos = ngx_strstr(args_str + TFSNAME_KEY.len + tfs_filename_len + ZOOMPARAM_KEY.len + zoom_param_len, QUALITY_KEY.data);
+            if(quality_pos != NULL)
+            {
+                const char* separate_char = ngx_strchr( quality_pos + QUALITY_KEY.len, '&');
+                int quality_param_len = r->args.len - (quality_pos - (const char*)args_str + QUALITY_KEY.len) + 1;
+                if(separate_char != NULL)
+                {
+                    quality_param_len = separate_char - (quality_pos + QUALITY_KEY.len) + 1;
+                }
+                if(quality_param_len > QUALITY_LEN)
+                {
+                    ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "tfs get file quality param too long:%d.", quality_param_len);
+                    return NGX_ERROR;
+                }
+                u_char* tmp2 = (u_char*)ngx_create_temp_buf(r->pool, quality_param_len);
+                strncpy((char*)tmp2, quality_pos + QUALITY_KEY.len, quality_param_len);
+                tmp2[quality_param_len - 1] = '\0';
+                u_char* p = qualityparam;
+                ngx_unescape_uri(&p, &tmp2, zoom_param_len, NGX_UNESCAPE_URI);
+                qualityparam[quality_param_len - 1] = '\0';
+                ngx_log_error(NGX_LOG_INFO, r->connection->log, 0, "tfs get file with quality: %s.",  qualityparam);
+            }
+            else
+            {
+                ngx_log_error(NGX_LOG_INFO, r->connection->log, 0, "tfs get file zoom with default quality.");
+            }
         }
         else
         {
@@ -201,6 +229,7 @@ ngx_http_tfs_get_handler(ngx_http_request_t *r)
     ngx_chain_t   out;
     u_char tfsname[TFS_FILE_LEN + 1];
     u_char zoomparam[ZOOMPARAM_LEN + 1] = {'\0'};
+    u_char qualityparam[QUALITY_LEN + 1] = {'\0'};
     ngx_http_tfs_ns_loc_conf_t  *cglcf;
 
     cglcf = (ngx_http_tfs_ns_loc_conf_t*)ngx_http_get_module_loc_conf(r, ngx_http_tfs_module);
@@ -213,7 +242,7 @@ ngx_http_tfs_get_handler(ngx_http_request_t *r)
         return NGX_HTTP_NOT_MODIFIED;
     }
 
-    if( NGX_OK != ngx_http_tfs_get_args_tfsname(r, tfsname, zoomparam)) {
+    if( NGX_OK != ngx_http_tfs_get_args_tfsname(r, tfsname, zoomparam, qualityparam)) {
         ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "reject tfs get request for wrong args. ");
     	return NGX_HTTP_NOT_ALLOWED;
     }
@@ -277,6 +306,7 @@ ngx_http_tfs_get_handler(ngx_http_request_t *r)
         return NGX_HTTP_NOT_FOUND;
 	}
 
+    static const ngx_str_t good_str = ngx_string("good");
     if(ngx_strlen(zoomparam) > 0)
     {
         Blob imgdata;
@@ -294,7 +324,10 @@ ngx_http_tfs_get_handler(ngx_http_request_t *r)
                     zoom_param_geo.width(image.columns());
                 if(zoom_param_geo.height() == 0)
                     zoom_param_geo.height(image.rows());
-                image.scale(zoom_param_geo);
+                if(ngx_strncasecmp(qualityparam, good_str.data, good_str.len) == 0)
+                    image.zoom(zoom_param_geo);
+                else
+                    image.scale(zoom_param_geo);
             }
             image.write(&zoomed_imgdata);
         }
