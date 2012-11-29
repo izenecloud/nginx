@@ -332,6 +332,7 @@ ngx_http_tfs_get_handler(ngx_http_request_t *r)
                         quality_i = 50;
                     if(quality_i > 100)
                         quality_i = 100;
+                    quality_i = min(quality_i, (unsigned int)((double)image.columns()/zoom_param_geo.width()*(double)image.rows()/zoom_param_geo.height()*image.quality()));
                     image.quality(quality_i);
                     image.zoom(zoom_param_geo);
                 }
