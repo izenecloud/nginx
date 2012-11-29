@@ -16,7 +16,7 @@ using namespace Magick;
 
 #define DEFAULT_TFS_READ_WRITE_SIZE (2 * 1024 * 1024)
 #define ZOOMPARAM_LEN 64
-#define QUALITY_LEN 4
+#define QUALITY_LEN 10
 #define scast(T,V)                      static_cast< T >( (V) )
 #define TFS_NS_ARRAY_INIT_SIZE             4
 
