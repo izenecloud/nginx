@@ -316,10 +316,10 @@ ngx_http_tfs_get_handler(ngx_http_request_t *r)
         Blob zoomed_imgdata;
         try
         {
+            image.read(imgdata);
             Geometry zoom_param_geo((const char*)zoomparam);
             if(zoom_param_geo <= image.size())
             {
-                image.read(imgdata);
                 if(zoom_param_geo.width() == 0)
                     zoom_param_geo.width(image.columns());
                 if(zoom_param_geo.height() == 0)
@@ -330,22 +330,21 @@ ngx_http_tfs_get_handler(ngx_http_request_t *r)
                     sscanf((const char*)qualityparam, "%d", &quality_i);
                     if(quality_i < 50)
                         quality_i = 50;
-                    if(quality_i > 100)
-                        quality_i = 100;
-                    quality_i = min(quality_i, (unsigned int)((double)image.columns()/zoom_param_geo.width()*(double)image.rows()/zoom_param_geo.height()*image.quality()));
-                    image.quality(quality_i);
+                    if(quality_i > 98)
+                        quality_i = 98;
                     image.zoom(zoom_param_geo);
-                    if(image.fileSize() > (int)finfo.size_)
-                    {
-                        image.read(imgdata);
-                        image.scale(zoom_param_geo);
-                    }
+                    image.quality(quality_i);
                 }
                 else
                 {
                     image.scale(zoom_param_geo);
                 }
                 image.write(&zoomed_imgdata);
+                if(zoomed_imgdata.length() > (int)finfo.size_)
+                {
+                    image.quality(85);
+                    image.write(&zoomed_imgdata);
+                }
             }
             else
             {
