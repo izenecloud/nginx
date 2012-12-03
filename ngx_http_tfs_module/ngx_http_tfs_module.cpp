@@ -340,11 +340,6 @@ ngx_http_tfs_get_handler(ngx_http_request_t *r)
                     image.scale(zoom_param_geo);
                 }
                 image.write(&zoomed_imgdata);
-                if(zoomed_imgdata.length() > (int)finfo.size_)
-                {
-                    image.quality(85);
-                    image.write(&zoomed_imgdata);
-                }
             }
             else
             {
