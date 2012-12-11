@@ -356,7 +356,7 @@ ngx_http_tfs_get_handler(ngx_http_request_t *r)
         }
         catch( Magick::Exception &e)
         {
-            ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "Image resize throw magick exception.");
+            ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "Image resize throw magick exception. msg: %s", e.what());
             resize_error = true;
             //return NGX_HTTP_INTERNAL_SERVER_ERROR;
         }
