@@ -250,8 +250,15 @@ ngx_http_tfs_get_handler(ngx_http_request_t *r)
     int fd = -1;
     if(cglcf->tfsclient == NULL)
     {
-        ngx_log_error(NGX_LOG_ERR, r->connection->log, 0 , "TFS client is null.");
-        return NGX_HTTP_INTERNAL_SERVER_ERROR;
+        cglcf->tfsclient = TfsClient::Instance();
+        int ret = cglcf->tfsclient->initialize((const char*)cglcf->tfs_nsip.data);
+        if(ret != TFS_SUCCESS)
+        {
+            ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "reinit TFS client failed.");
+            cglcf->tfsclient = NULL;
+            return NGX_HTTP_INTERNAL_SERVER_ERROR;
+        }
+        ngx_log_error(NGX_LOG_ERR, r->connection->log, 0 , "TFS client reinit success.");
     }
 
 	TfsClient* tfsclient = cglcf->tfsclient;
