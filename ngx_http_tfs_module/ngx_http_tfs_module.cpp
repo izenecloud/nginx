@@ -321,6 +321,7 @@ ngx_http_tfs_get_handler(ngx_http_request_t *r)
 
         Image image;
         Blob zoomed_imgdata;
+        bool resize_error = false;
         try
         {
             image.read(imgdata);
@@ -356,21 +357,27 @@ ngx_http_tfs_get_handler(ngx_http_request_t *r)
         catch( Magick::Exception &e)
         {
             ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "Image resize throw magick exception.");
-            return NGX_HTTP_INTERNAL_SERVER_ERROR;
+            resize_error = true;
+            //return NGX_HTTP_INTERNAL_SERVER_ERROR;
         }
         catch( ... )
         {
             ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "Image resize caught unknown exception.");
-            return NGX_HTTP_INTERNAL_SERVER_ERROR;
+            resize_error = true;
+            //return NGX_HTTP_INTERNAL_SERVER_ERROR;
         }
         if(zoomed_imgdata.data() == NULL)
         {
             ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "Image resize data is null.");
-            return NGX_HTTP_INTERNAL_SERVER_ERROR;
+            resize_error = true;
+            //return NGX_HTTP_INTERNAL_SERVER_ERROR;
         }
-        if((int)zoomed_imgdata.length() > (int)finfo.size_)
+        if(resize_error || ((int)zoomed_imgdata.length() > (int)finfo.size_) )
         {
-            ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "Image resize data is larger than original data which is not allowed, so just return the original data.");
+            if(!resize_error)
+            {
+                ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "Image resize data is larger than original data which is not allowed, so just return the original data.");
+            }
             r->headers_out.content_length_n = finfo.size_;
         }
         else
