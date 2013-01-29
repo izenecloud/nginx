@@ -21,6 +21,7 @@ http {
         location = /get {   
             tfs_get;
             tfs_nsip '10.20.134.195:10000';        
+            watermark_file '/usr/local/nginx/watermark.png';
         }   
     }
 }
