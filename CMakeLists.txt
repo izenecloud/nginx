@@ -101,40 +101,32 @@ set(SF1R_MODULE sf1r-module)
 set(FLUENTD_MODULE nginx-fluentd-module)
 set(TFS_MODULE ngx_http_tfs_module)
 
+list(APPEND MODULE_DIRS
+    ${ECHO_MODULE}
+    ${HEADERS_MORE_MODULE}
+    ${HELLO_MODULE}
+    ${SF1R_MODULE}
+    ${FLUENTD_MODULE}
+)
+
+
+# TFS module requires tfsclient
 find_package(tfsclient)
 if(tfsclient_FOUND)
-MESSAGE("===========TFS client found ==============") 
-find_package(ImageMagick COMPONENTS Magick++ REQUIRED)
-if(NOT ImageMagick_FOUND)
-    message(FATAL "ImageMagick not found")
-else()
-    foreach(include ${ImageMagick_INCLUDE_DIRS})
-        list(APPEND SF1R_INCLUDES ${include})
-    endforeach()
-    foreach(library ${ImageMagick_LIBRARIES})
-        list(APPEND SF1R_LIBRARIES ${library})
-    endforeach()
-endif()
-
-list(APPEND MODULE_DIRS
-    ${ECHO_MODULE}
-    ${HEADERS_MORE_MODULE}
-    ${HELLO_MODULE}
-    ${SF1R_MODULE}
-    ${FLUENTD_MODULE}
-    ${TFS_MODULE}
-)
-else(tfsclient_FOUND)
-MESSAGE("===========TFS client not found ==============") 
-list(APPEND MODULE_DIRS
-    ${ECHO_MODULE}
-    ${HEADERS_MORE_MODULE}
-    ${HELLO_MODULE}
-    ${SF1R_MODULE}
-    ${FLUENTD_MODULE}
-)
+    message("===========TFS client found ==============") 
+    find_package(ImageMagick COMPONENTS Magick++ REQUIRED)
+    if(NOT ImageMagick_FOUND)
+        message(FATAL "ImageMagick not found")
+    else()
+        foreach(include ${ImageMagick_INCLUDE_DIRS})
+            list(APPEND SF1R_INCLUDES ${include})
+        endforeach()
+        foreach(library ${ImageMagick_LIBRARIES})
+            list(APPEND SF1R_LIBRARIES ${library})
+        endforeach()
+    endif()
+    list(APPEND MODULE_DIRS ${TFS_MODULE})
 endif(tfsclient_FOUND)
-
 
 
 # sf1r config
