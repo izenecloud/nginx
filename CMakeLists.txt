@@ -69,6 +69,13 @@ set(BUILD_DIR ${nginx_BINARY_DIR}/${NGINX_SRC})
 list(APPEND CONFIGURE_ARGS "--builddir=${BUILD_DIR}")
 
 
+# syslog
+option(WITH_SYSLOG "enable logging via syslog and pipe" true)
+if(WITH_SYSLOG)
+    list(APPEND CONFIGURE_ARGS "--with-syslog")
+endif()
+
+
 # debugging log
 option(WITH_NGINX_DEBUG "enable the debug logging" false)
 if(WITH_NGINX_DEBUG)
@@ -186,7 +193,7 @@ set_directory_properties(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES ${BUILD_DIR})
 # tests
 enable_testing()
 
-set(MODULE_TEST ${HELLO_MODULE} ${SF1R_MODULE})
+set(MODULE_TEST ${HELLO_MODULE} ${SF1R_MODULE} syslog)
 
 if (MODULE_TEST)
     add_custom_target(test)
