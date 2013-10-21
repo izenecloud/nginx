@@ -69,6 +69,13 @@ set(BUILD_DIR ${nginx_BINARY_DIR}/${NGINX_SRC})
 list(APPEND CONFIGURE_ARGS "--builddir=${BUILD_DIR}")
 
 
+# syslog
+option(WITH_SYSLOG "enable logging via syslog and pipe" true)
+if(WITH_SYSLOG)
+    list(APPEND CONFIGURE_ARGS "--with-syslog")
+endif()
+
+
 # debugging log
 option(WITH_NGINX_DEBUG "enable the debug logging" false)
 if(WITH_NGINX_DEBUG)
@@ -79,12 +86,12 @@ if(WITH_DEBUG)
     list(APPEND CONFIGURE_ARGS "--with-cc-opt=-DSDEBUG")
 endif()
 
-# nginx configuration options
-option(WITH_REWRITE "enable the http_rewrite module" true)
-if(NOT WITH_REWRITE)
-   list(APPEND CONFIGURE_ARGS "--without-http_rewrite_module")
-endif()
 
+# nginx configuration options
+option(WITH_STATUS "enable the http_stub_status_module" false)
+if(WITH_STATUS)
+   list(APPEND CONFIGURE_ARGS "--with-http_stub_status_module")
+endif()
 
 # extra modules source dirs
 set(ECHO_MODULE agentzh-echo-nginx-module-df58882)
@@ -94,40 +101,32 @@ set(SF1R_MODULE sf1r-module)
 set(FLUENTD_MODULE nginx-fluentd-module)
 set(TFS_MODULE ngx_http_tfs_module)
 
+list(APPEND MODULE_DIRS
+    ${ECHO_MODULE}
+    ${HEADERS_MORE_MODULE}
+    ${HELLO_MODULE}
+    ${SF1R_MODULE}
+    ${FLUENTD_MODULE}
+)
+
+
+# TFS module requires tfsclient
 find_package(tfsclient)
 if(tfsclient_FOUND)
-MESSAGE("===========TFS client found ==============") 
-find_package(ImageMagick COMPONENTS Magick++ REQUIRED)
-if(NOT ImageMagick_FOUND)
-    message(FATAL "ImageMagick not found")
-else()
-    foreach(include ${ImageMagick_INCLUDE_DIRS})
-        list(APPEND SF1R_INCLUDES ${include})
-    endforeach()
-    foreach(library ${ImageMagick_LIBRARIES})
-        list(APPEND SF1R_LIBRARIES ${library})
-    endforeach()
-endif()
-
-list(APPEND MODULE_DIRS
-    ${ECHO_MODULE}
-    ${HEADERS_MORE_MODULE}
-    ${HELLO_MODULE}
-    ${SF1R_MODULE}
-    ${FLUENTD_MODULE}
-    ${TFS_MODULE}
-)
-else(tfsclient_FOUND)
-MESSAGE("===========TFS client not found ==============") 
-list(APPEND MODULE_DIRS
-    ${ECHO_MODULE}
-    ${HEADERS_MORE_MODULE}
-    ${HELLO_MODULE}
-    ${SF1R_MODULE}
-    ${FLUENTD_MODULE}
-)
+    message("===========TFS client found ==============") 
+    find_package(ImageMagick COMPONENTS Magick++ REQUIRED)
+    if(NOT ImageMagick_FOUND)
+        message(FATAL "ImageMagick not found")
+    else()
+        foreach(include ${ImageMagick_INCLUDE_DIRS})
+            list(APPEND SF1R_INCLUDES ${include})
+        endforeach()
+        foreach(library ${ImageMagick_LIBRARIES})
+            list(APPEND SF1R_LIBRARIES ${library})
+        endforeach()
+    endif()
+    list(APPEND MODULE_DIRS ${TFS_MODULE})
 endif(tfsclient_FOUND)
-
 
 
 # sf1r config
@@ -186,7 +185,7 @@ set_directory_properties(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES ${BUILD_DIR})
 # tests
 enable_testing()
 
-set(MODULE_TEST ${HELLO_MODULE} ${SF1R_MODULE})
+set(MODULE_TEST ${HELLO_MODULE} ${SF1R_MODULE} syslog)
 
 if (MODULE_TEST)
     add_custom_target(test)

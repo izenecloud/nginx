@@ -1,4 +1,5 @@
-build
+/build
+/*/t/servroot
 /nbproject
 /tengine/Makefile
 *.swp
