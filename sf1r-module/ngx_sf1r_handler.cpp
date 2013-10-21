@@ -5,6 +5,8 @@
  * Created on January 17, 2012, 11:23 AM
  */
 
+#define BOOST_THREAD_DONT_USE_CHRONO
+
 extern "C" {
 #include "ngx_sf1r_handler.h"
 #include "ngx_sf1r_module.h"
